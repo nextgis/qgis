@@ -104,7 +104,10 @@ QMenu *QgsAppLayerTreeViewMenuProvider::createContextMenu()
 
       menu->addAction( actions->actionRenameGroupOrLayer( menu ) );
 
+      addCustomGroupActions( menu );
+
       menu->addSeparator();
+
       menu->addAction( actions->actionAddGroup( menu ) );
       QAction *removeAction = menu->addAction( QgsApplication::getThemeIcon( QStringLiteral( "/mActionRemoveLayer.svg" ) ), tr( "&Remove Group…" ), QgisApp::instance(), &QgisApp::removeLayer );
       removeAction->setEnabled( removeActionEnabled() );
@@ -1013,6 +1016,35 @@ void QgsAppLayerTreeViewMenuProvider::removeLegendLayerActionsForLayer( QgsMapLa
   }
 }
 
+void QgsAppLayerTreeViewMenuProvider::addLegendLayerActionForGroup( QAction *action , const QString &menu )
+{
+  mGroupLegendLayerActionList.append( LegendLayerAction( action, menu, false ) );
+}
+
+bool QgsAppLayerTreeViewMenuProvider::removeLegendLayerActionForGroup( QAction *action )
+{
+  size_t beforeRemoveSize = mGroupLegendLayerActionList.size();
+  mGroupLegendLayerActionList.erase( std::remove_if( mGroupLegendLayerActionList.begin(), mGroupLegendLayerActionList.end(),
+  [&]( const LegendLayerAction& lla )
+  {
+    return lla.action == action;
+  } ), mGroupLegendLayerActionList.end() );
+  size_t afterRemoveSize = mGroupLegendLayerActionList.size();
+  return afterRemoveSize < beforeRemoveSize;
+}
+
+bool QgsAppLayerTreeViewMenuProvider::removeLegendLayerActionsForGroup( const QString &menu )
+{
+  size_t beforeRemoveSize = mGroupLegendLayerActionList.size();
+  mGroupLegendLayerActionList.erase( std::remove_if( mGroupLegendLayerActionList.begin(), mGroupLegendLayerActionList.end(),
+  [&]( const LegendLayerAction& lla )
+  {
+    return lla.menu == menu;
+  } ), mGroupLegendLayerActionList.end() );
+  size_t afterRemoveSize = mGroupLegendLayerActionList.size();
+  return afterRemoveSize < beforeRemoveSize;
+}
+
 QList< LegendLayerAction > QgsAppLayerTreeViewMenuProvider::legendLayerActions( Qgis::LayerType type ) const
 {
 #ifdef QGISDEBUG
@@ -1032,6 +1064,24 @@ QList< LegendLayerAction > QgsAppLayerTreeViewMenuProvider::legendLayerActions( 
   return mLegendLayerActionMap.contains( type ) ? mLegendLayerActionMap.value( type ) : QList< LegendLayerAction >();
 }
 
+QList< LegendLayerAction > QgsAppLayerTreeViewMenuProvider::groupLegendLayerActions() const
+{
+  return mGroupLegendLayerActionList;
+}
+
+QList< QAction* > QgsAppLayerTreeViewMenuProvider::groupMenuActions( const QString& menu) const
+{
+  QList< QAction* > actionForGroupMenuList;
+  for (const auto& groupLegendLayerAction : mGroupLegendLayerActionList)
+  {
+    if (groupLegendLayerAction.menu == menu)
+    {
+      actionForGroupMenuList.push_back(groupLegendLayerAction.action);
+    }
+  }
+  return actionForGroupMenuList;
+}
+
 void QgsAppLayerTreeViewMenuProvider::addCustomLayerActions( QMenu *menu, QgsMapLayer *layer )
 {
   if ( !layer )
@@ -1042,21 +1092,38 @@ void QgsAppLayerTreeViewMenuProvider::addCustomLayerActions( QMenu *menu, QgsMap
 
   if ( ! lyrActions.isEmpty() )
   {
+      addCustomActionsToMenu( menu, lyrActions );
+  }
+}
+
+void QgsAppLayerTreeViewMenuProvider::addCustomGroupActions(QMenu *menu)
+{
+  // add custom group actions - should this go at end?
+  QList< LegendLayerAction > groupActions = groupLegendLayerActions();
+
+  if ( ! groupActions.isEmpty() )
+  {
+    addCustomActionsToMenu( menu, groupActions );
+  }
+
+}
+
+void QgsAppLayerTreeViewMenuProvider::addCustomActionsToMenu(QMenu *menu, const QList<LegendLayerAction> &customActions)
+{
     menu->addSeparator();
     QList<QMenu *> menus;
-    for ( int i = 0; i < lyrActions.count(); i++ )
+    for ( int i = 0; i < customActions.count(); i++ )
     {
-      if ( lyrActions[i].allLayers || lyrActions[i].layers.contains( layer ) )
       {
-        if ( lyrActions[i].menu.isEmpty() )
+        if ( customActions[i].menu.isEmpty() )
         {
-          menu->addAction( lyrActions[i].action );
+          menu->addAction( customActions[i].action );
         }
         else
         {
           // find or create menu for given menu name
           // adapted from QgisApp::getPluginMenu( QString menuName )
-          QString menuName = lyrActions[i].menu;
+          QString menuName = customActions[i].menu;
 #ifdef Q_OS_MAC
           // Mac doesn't have '&' keyboard shortcuts.
           menuName.remove( QChar( '&' ) );
@@ -1092,13 +1159,11 @@ void QgsAppLayerTreeViewMenuProvider::addCustomLayerActions( QMenu *menu, QgsMap
             // Where to put it? - we worked that out above...
             menu->insertMenu( before, newMenu );
           }
-          // QMenu* menu = getMenu( lyrActions[i].menu, &beforeSep, &afterSep, &menu );
-          newMenu->addAction( lyrActions[i].action );
+          newMenu->addAction( customActions[i].action );
         }
       }
     }
     menu->addSeparator();
-  }
 }
 
 void QgsAppLayerTreeViewMenuProvider::editVectorSymbol( const QString &layerId )

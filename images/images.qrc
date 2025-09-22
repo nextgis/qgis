@@ -69,6 +69,7 @@
         <file>flags/ky.svg</file>
         <file>icons/qgis-icon-16x16.png</file>
         <file>icons/qgis-icon-60x60.png</file>
+        <file>icons/qgis-icon-512x512.png</file>
         <file>icons/qgis-full.png</file>
         <file>icons/qbrowser_icon.svg</file>
         <file>north_arrows/default.png</file>
@@ -1065,6 +1066,7 @@
         <file>themes/default/mIconRenderOnTerrain.svg</file>
         <file>themes/default/mIconFloaterCartesian.svg</file>
         <file>themes/default/mIconFloaterEllipsoid.svg</file>
+        <file>themes/default/nextgis.svg</file>
     </qresource>
     <qresource prefix="/images/tips">
         <file alias="symbol_levels.png">qgis_tips/symbol_levels.png</file>

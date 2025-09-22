@@ -12998,28 +12998,28 @@ void QgisApp::pyQgisApiDocumentation()
 void QgisApp::reportaBug()
 {
   QgsSettings settings;
-  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, nextgisDomain() + u"/bugreport"_s ).toString();
+  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, nextgisDomain() + u"/support"_s ).toString();
   openURL( reportaBugUrl, false );
 }
 
 void QgisApp::getInvolved()
 {
   QgsSettings settings;
-  QString getInvolvedUrl = settings.value( u"qgis/getInvolved"_s, tr( "https://qgis.org/community/involve/" ) ).toString();
+  QString getInvolvedUrl = settings.value( u"qgis/getInvolved"_s, nextgisDomain() + u"/redirect/ru/ak45prp5"_s ).toString();
   openURL( getInvolvedUrl, false );
 }
 
 void QgisApp::donate()
 {
   QgsSettings settings;
-  QString donateUrl = settings.value( u"qgis/donate"_s, tr( "https://qgis.org/funding/donate/" ) ).toString();
+  QString donateUrl = settings.value( u"qgis/donate"_s, nextgisDomain() + u"/redirect/ru/ak45prp5"_s ).toString();
   openURL( donateUrl, false );
 }
 
 void QgisApp::supportProviders()
 {
   QgsSettings settings;
-  QString supportProvidersUrl = settings.value( u"qgis/supportProvidersUrl"_s, tr( "https://qgis.org/resources/support/commercial-support/" ) ).toString();
+  QString supportProvidersUrl = settings.value( u"qgis/supportProvidersUrl"_s, nextgisDomain() + u"/support"_s ).toString();
   openURL( supportProvidersUrl, false );
 }
 

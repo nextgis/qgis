@@ -17,6 +17,7 @@
 
 #include "qgsabout.h"
 #include "moc_qgsabout.cpp"
+#include "ngcustomization.h"
 #include "qgsapplication.h"
 #include "qgsauthmethodregistry.h"
 #include "qgsproviderregistry.h"
@@ -287,7 +288,7 @@ void QgsAbout::btnQgisUser_clicked()
 
 void QgsAbout::btnQgisHome_clicked()
 {
-  openUrl( QStringLiteral( "https://qgis.org" ) );
+  openUrl( QString( nextgisDomain() + QStringLiteral( "/nextgis-qgis" ) ) );
 }
 
 void QgsAbout::openUrl( const QUrl &url )

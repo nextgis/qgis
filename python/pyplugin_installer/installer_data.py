@@ -123,6 +123,10 @@ officialRepo = (
     QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"),
     "https://plugins.qgis.org/plugins/plugins.xml",
 )
+nextGISRepo = (
+    QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"),
+    "https://rm.nextgis.com/api/repo/1/qgis_xml",
+)
 
 
 # --- common functions ------------------------------------------------------------------- #
@@ -318,12 +322,17 @@ class Repositories(QObject):
         settings.beginGroup(reposGroup)
         # first, update repositories in QgsSettings if needed
         officialRepoPresent = False
+        nextgisRepoPresent = False
         for key in settings.childGroups():
             url = settings.value(key + "/url", "", type=str)
             if url == officialRepo[1]:
                 officialRepoPresent = True
+            if url == nextGISRepo[1]:
+                nextgisRepoPresent = True
         if not officialRepoPresent:
             settings.setValue(officialRepo[0] + "/url", officialRepo[1])
+        if not nextgisRepoPresent:
+            settings.setValue(nextGISRepo[0] + "/url", nextGISRepo[1])
 
         for key in settings.childGroups():
             self.mRepositories[key] = {}

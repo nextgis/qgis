@@ -49,7 +49,7 @@
 
 using namespace Qt::StringLiterals;
 
-const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout = new QgsSettingsEntryInteger( u"network-timeout"_s, QgsSettingsTree::sTreeNetwork, 60000, QObject::tr( "Network timeout" ) );
+const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout = new QgsSettingsEntryInteger( u"network-timeout"_s, QgsSettingsTree::sTreeNetwork, 300000, QObject::tr( "Network timeout" ) );
 const QgsSettingsEntryString *QgsNetworkAccessManager::settingsUserAgent
   = new QgsSettingsEntryString( u"user-agent"_s, QgsSettingsTree::sTreeNetwork, u"Mozilla/5.0"_s, u"User agent string for network requests"_s );
 const QgsSettingsEntryBool *QgsNetworkAccessManager::settingsProxyEnabled = new QgsSettingsEntryBool( u"proxy-enabled"_s, QgsSettingsTree::sTreeProxy, false, u"Whether network proxy is enabled"_s );

@@ -34,8 +34,6 @@
 
 using namespace Qt::StringLiterals;
 
-#define FEED_URL "https://feed.qgis.org/"
-
 
 QgsWelcomeScreenController::QgsWelcomeScreenController( QgsWelcomeScreen *welcomeScreen )
   : QObject( welcomeScreen )
@@ -132,7 +130,7 @@ QgsWelcomeScreen::QgsWelcomeScreen( bool skipVersionCheck, QWidget *parent )
 
   mTemplateProjectsModel = new QgsTemplateProjectsModel( this );
 
-  mNewsFeedParser = new QgsNewsFeedParser( QUrl( QStringLiteral( FEED_URL ) ), QString(), this );
+  mNewsFeedParser = new QgsNewsFeedParser( QUrl( newsFeedUrl() ), QString(), this );
   mNewsFeedModel = new QgsNewsFeedProxyModel( mNewsFeedParser, this );
 
   mWelcomeScreenController = new QgsWelcomeScreenController( this );
@@ -208,7 +206,7 @@ void QgsWelcomeScreen::hideScene()
 
 QString QgsWelcomeScreen::newsFeedUrl()
 {
-  return QStringLiteral( FEED_URL );
+  return QString();
 }
 
 void QgsWelcomeScreen::registerTypes()

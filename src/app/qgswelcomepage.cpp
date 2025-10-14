@@ -106,6 +106,7 @@ QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
     mNewsFeedListView->setItemDelegate( mNewsDelegate );
     mNewsFeedListView->setContextMenuPolicy( Qt::CustomContextMenu );
     mNewsFeedListView->viewport()->installEventFilter( this );
+    connect( mNewsFeedListView, &QAbstractItemView::doubleClicked, this, &QgsWelcomePage::newsItemActivated );
     connect( mNewsFeedListView, &QAbstractItemView::activated, this, &QgsWelcomePage::newsItemActivated );
     connect( mNewsFeedListView, &QListView::customContextMenuRequested, this, &QgsWelcomePage::showContextMenuForNews );
     connect( mNewsFeedParser, &QgsNewsFeedParser::entryDismissed, this, &QgsWelcomePage::updateNewsFeedVisibility );

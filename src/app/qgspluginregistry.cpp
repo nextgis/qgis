@@ -20,6 +20,7 @@
 #include <QFileInfo>
 #include <QLibrary>
 #include <QMessageBox>
+#include <qlist.h>
 
 #include "qgssettings.h"
 #include "qgis.h"
@@ -573,11 +574,16 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString &pluginDirString )
     corePlugins << "nextgis_connect";
     corePlugins << "ngq_rosreestr_tools";
 
+    QStringList disabledCorePlugins = QStringList();
+    disabledCorePlugins << QStringLiteral( "db_manager" );
+    disabledCorePlugins << QStringLiteral( "MetaSearch" );
+    disabledCorePlugins << QStringLiteral( "grassprovider" );
+
     // make the required core plugins enabled by default:
     const auto constCorePlugins = corePlugins;
     for ( const QString &corePlugin : constCorePlugins )
     {
-      if ( !mySettings.contains( "/PythonPlugins/" + corePlugin ) )
+      if ( !mySettings.contains( "/PythonPlugins/" + corePlugin ) && !disabledCorePlugins.contains( corePlugin ) )
       {
         mySettings.setValue( "/PythonPlugins/" + corePlugin, true );
       }

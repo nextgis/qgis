@@ -25,6 +25,7 @@
 #include "qgsziputils.h"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFontDatabase>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
@@ -153,6 +154,21 @@ void QgsFontManager::installUserFonts()
     }
 
     installFontsFromDirectory( dir );
+  }
+}
+
+void QgsFontManager::installNextGisFonts()
+{
+  QDir fontsDir(QgsApplication::pkgDataPath() + QStringLiteral( "/resources/fonts" ));
+
+  QStringList filters;
+  filters << "*.ttf" << "*.otf";
+  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
+  // Add fonts to database
+  QDirIterator it(fontsDir.path(), filters, QDir::Files, QDirIterator::IteratorFlag::Subdirectories);
+  while (it.hasNext()) {
+      QString fontPath = it.next();
+      QFontDatabase::addApplicationFont( fontPath );
   }
 }
 

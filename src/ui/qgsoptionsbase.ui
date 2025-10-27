@@ -5461,6 +5461,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </item>
           </layout>
          </widget>
+         <widget class="NGAuthOptions" name="mOptionsPageNextGIS" native="true"/>
         </widget>
        </item>
       </layout>
@@ -5617,6 +5618,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <class>QgsAuthEditorWidgets</class>
    <extends>QTabWidget</extends>
    <header>qgsautheditorwidgets.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>NGAuthOptions</class>
+   <extends>QWidget</extends>
+   <header>options/ngauthoptions.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -82,4 +82,3 @@ install(TARGETS qgis_quick
 ############################################################
 # qgis_quick_plugin module (QML) library
 add_subdirectory(plugin)
-

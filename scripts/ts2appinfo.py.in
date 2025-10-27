@@ -26,7 +26,7 @@ from PyQt@QT_VERSION_MAJOR@.QtCore import QCoreApplication, QTranslator
 
 strings = {}
 
-d = et.parse('linux/org.qgis.qgis.appdata.xml.in')
+d = et.parse('linux/com.nextgis.ngqgis.appdata.xml.in')
 
 r = d.getroot()
 valuesNeeded = ['name', 'summary', 'description']
@@ -43,7 +43,7 @@ for c in r:
         else:
             r.remove(c)
 
-f = open("linux/org.qgis.qgis.desktop.in")
+f = open("linux/com.nextgis.ngqgis.desktop.in")
 lines = f.readlines()
 
 for line in lines:
@@ -101,9 +101,9 @@ for c in r:
                 e.tail = c.tail
                 r.append(e)
 
-d.write(sys.argv[1] + "/org.qgis.qgis.appdata.xml", encoding="UTF-8", xml_declaration=True)
+d.write(sys.argv[1] + "/com.nextgis.ngqgis.appdata.xml", encoding="UTF-8", xml_declaration=True)
 
-f = open(sys.argv[1] + "/org.qgis.qgis.desktop", "w", encoding="utf-8")
+f = open(sys.argv[1] + "/com.nextgis.ngqgis.desktop", "w", encoding="utf-8")
 
 for line in lines:
     skip = False

@@ -17,6 +17,11 @@ if (WITH_PDF4QT)
   SUBDIRS(${CMAKE_SOURCE_DIR}/external/PDF4QT)
 endif()
 
+set(NG_CORE_SRCS
+)
+set(NG_CORE_HDRS
+)
+
 set(QGIS_CORE_SRCS
   ${CMAKE_SOURCE_DIR}/external/kdbush/include/kdbush.hpp
 
@@ -1050,6 +1055,8 @@ set(QGIS_CORE_SRCS
 
   qgsuserprofile.cpp
   qgsuserprofilemanager.cpp
+
+  ${NG_CORE_SRCS}
 )
 
 if(WITH_QTPOSITIONING)
@@ -2259,6 +2266,8 @@ set(QGIS_CORE_PRIVATE_HDRS
   providers/ogr/qgscplerrorhandler_p.h
 
   textrenderer/qgstextrenderer_p.h
+
+  ${NG_CORE_HDRS}
 )
 
 if (HAVE_WEBENGINE)

@@ -41,7 +41,7 @@ QgsNative::Capabilities QgsLinuxNative::capabilities() const
 void QgsLinuxNative::initializeMainWindow( QWindow *, const QString &, const QString &, const QString & )
 {
   // Hardcoded desktop file value matching our official .deb packages
-  mDesktopFile = u"org.qgis.qgis.desktop"_s;
+  mDesktopFile = u"com.nextgis.ngqgis.desktop"_s;
 }
 
 void QgsLinuxNative::openFileExplorerAndSelectFile( const QString &path )

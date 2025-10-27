@@ -15,7 +15,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-
+#include "ngcustomization.h"
 #include "qgsoptions.h"
 
 #include "options/qgsadvancedoptions.h"
@@ -101,6 +101,12 @@ using namespace Qt::StringLiterals;
 
 #include "qgsconfig.h"
 
+#ifdef HAVE_NGSTD
+#include "core/request.h"
+#include "core/version.h"
+#include "framework/access/access.h"
+#endif // HAVE_NGSTD
+
 /**
  * \class QgsOptions - Set user options and preferences
  * Constructor
@@ -145,6 +151,8 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Network" ), QCoreApplication::translate( "QgsOptionsBase", "Network" ), u"propertyicons/network_and_proxy.svg"_s ) );
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), tr( "Locator" ), u"search.svg"_s ) );
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), tr( "GPU acceleration" ), u"mIconGPU.svg"_s ) );
+
+  mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QStringLiteral( "nextgis.svg" ) ) );
 
   mOptionsTreeView->setModel( mTreeModel );
 
@@ -253,6 +261,8 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   mIdentifyHighlightColorButton->setDefaultColor( Qgis::DEFAULT_HIGHLIGHT_COLOR );
 
   mSettings = new QgsSettings();
+
+  mOptionsPageNextGIS->init( mSettings );
 
   double identifyValue = QgsMapTool::settingSearchRadiusMM->value();
   QgsDebugMsgLevel( u"Standard Identify radius setting read from settings file: %1"_s.arg( identifyValue ), 3 );
@@ -424,7 +434,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   connect( mBtnRemoveHiddenPath, &QAbstractButton::clicked, this, &QgsOptions::removeHiddenPath );
 
   //locations of the QGIS help
-  const QStringList helpPathList = mSettings->value( u"help/helpSearchPath"_s, "https://docs.qgis.org/$qgis_short_version/$qgis_locale/docs/user_manual/" ).toStringList();
+  const QStringList helpPathList = mSettings->value( u"help/helpSearchPath"_s, u"%1/docs_ngqgis/source/index.html"_s.arg( nextgisDomain( u"docs"_s ) ) ).toStringList();
   for ( const QString &path : helpPathList )
   {
     QTreeWidgetItem *item = new QTreeWidgetItem();
@@ -1620,6 +1630,12 @@ void QgsOptions::saveOptions()
   }
   QgsNetworkAccessManager::settingsNoProxyUrls->setValue( noProxyUrls );
 
+#ifdef HAVE_NGSTD
+#if defined( NGLIB_COMPUTE_VERSION ) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION( 0, 11, 0 )
+  NGRequest::setProxy( grpProxy->isChecked(), mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(), leProxyPort->text().toInt(), mAuthSettings->username(), mAuthSettings->password(), "ANY" );
+#endif // NGLIB_VERSION_NUMBER > 1100
+#endif // HAVE_NGSTD
+
   QgisApp::instance()->namUpdate();
 
   //general settings
@@ -1937,6 +1953,31 @@ void QgsOptions::saveOptions()
   {
     // TODO[MD] QgisApp::instance()->legend()->updateLegendItemSymbologies();
   }
+
+#ifdef HAVE_NGSTD
+  // NextGIS settings
+  mSettings->setValue( "nextgis/send_crashes", mOptionsPageNextGIS->sendCrashes->isChecked() );
+  mSettings->setValue( "nextgis/endpoint", mOptionsPageNextGIS->endpointEdit->text() );
+  mSettings->setValue( "nextgis/auth_endpoint", mOptionsPageNextGIS->authEndpointEdit->text() );
+  mSettings->setValue( "nextgis/token_endpoint", mOptionsPageNextGIS->tokenEndpointEdit->text() );
+  mSettings->setValue( "nextgis/user_info_endpoint", mOptionsPageNextGIS->userInfoEndpointEdit->text() );
+  mSettings->setValue( "nextgis/auth_type", mOptionsPageNextGIS->authTypeSelector->currentIndex() );
+  mSettings->setValue( "nextgis/use_code_challenge", mOptionsPageNextGIS->codeChallengeCheckBox->isChecked() );
+
+  NGAccess::AuthSourceType type = static_cast<NGAccess::AuthSourceType>( mOptionsPageNextGIS->authTypeSelector->currentIndex() );
+  NGAccess::instance().setAuthEndpoint( mOptionsPageNextGIS->authEndpointEdit->text() );
+  NGAccess::instance().setTokenEndpoint( mOptionsPageNextGIS->tokenEndpointEdit->text() );
+  NGAccess::instance().setUserInfoEndpoint( mOptionsPageNextGIS->userInfoEndpointEdit->text() );
+  NGAccess::instance().setUseCodeChallenge( mOptionsPageNextGIS->codeChallengeCheckBox->isChecked() );
+  if ( type == NGAccess::AuthSourceType::NGID )
+  {
+    NGAccess::instance().setUseCodeChallenge( true );
+  }
+  NGAccess::instance().setEndPoint( mOptionsPageNextGIS->endpointEdit->text(), type );
+  NGAccess::instance().checkEndpointAsync( mOptionsPageNextGIS->endpointEdit->text() );
+
+  NGAccess::instance().initSentry( mOptionsPageNextGIS->sendCrashes->isChecked(), "" );
+#endif // HAVE_NGSTD
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );

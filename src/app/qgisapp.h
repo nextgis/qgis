@@ -216,7 +216,7 @@ class QgsGeoreferencerMainWindow;
  * \class QgisApp
  * \brief Main window for the QGIS application
  */
-class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
+class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 {
     Q_OBJECT
   public:
@@ -1569,7 +1569,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! QGIS Sponsors
     void sponsors();
     //! About QGIS
-    void about();
+    virtual void about();
 
     //! Add a vector layer defined by uri, layer name, data source uri
     void addSelectedVectorLayer( const QString &uri, const QString &layerName, const QString &provider );
@@ -1898,7 +1898,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! Open the QGIS homepage in users browser
     void helpQgisHomePage();
     //! Check qgis version against the qgis version server
-    void checkQgisVersion();
+    virtual void checkQgisVersion();
     //!Invoke the custom projection dialog
     void customProjection();
     //! configure shortcuts
@@ -2170,9 +2170,11 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void onRenderComplete( QPainter *p );
     void projectReadDecorationItems();
 
+  protected slots:
     //! clear out any stuff from project
     void closeProject();
 
+  private slots:
     //! trust and load project macros
     void enableProjectMacros();
 
@@ -2331,10 +2333,13 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
 
   private:
     void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
+
+  protected:
     void startProfile( const QString &name );
     void endProfile();
     void functionProfile( void ( QgisApp::*fnc )(), QgisApp *instance, const QString &name );
 
+  private:
     void showProgress( int progress, int totalSteps );
 
     /**
@@ -2411,7 +2416,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void createActionGroups();
     void createMenus();
     void createProfileMenu();
-    void createToolBars();
+    virtual void createToolBars();
     void createStatusBar();
     void setupConnections();
     void initLayerTreeView();
@@ -2690,9 +2695,12 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QgisAppInterface *mQgisInterface = nullptr;
 
     QSplashScreen *mSplash = nullptr;
+
+  protected:
     //! list of recently opened/saved project files
     QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
 
+  private:
     //! Currently open layout designer dialogs
     QSet<QgsLayoutDesignerDialog *> mLayoutDesignerDialogs;
 

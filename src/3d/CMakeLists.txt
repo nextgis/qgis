@@ -351,7 +351,6 @@ GENERATE_EXPORT_HEADER(
 
 set(QGIS_3D_HDRS ${QGIS_3D_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_3d.h)
 
-
 #generate unversioned libs for android
 if (NOT ANDROID)
   set_target_properties(qgis_3d PROPERTIES

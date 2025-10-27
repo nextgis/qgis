@@ -117,6 +117,8 @@ typedef SInt32 SRefCon;
 #include "qgsopenclutils.h"
 #endif
 
+#include "ngcustomization.h"
+
 /**
  * Print QGIS version
  */
@@ -134,7 +136,8 @@ void usage( const QString &appName )
   QStringList msg;
 
   msg
-    << u"QGIS is a user friendly Open Source Geographic Information System.\n"_s
+    << u"%1 QGIS - %2 (%3)\n"_s.arg( NEXTGIS ).arg( NEXTGIS_QGIS_VERSION ).arg( VERSION )
+    << u"%1QGIS is a user friendly Open Source Geographic Information System.\n"_s.arg( NEXTGIS )
     << u"Usage: "_s
     << appName
     << u" [OPTION] [FILE]\n"_s
@@ -998,9 +1001,9 @@ int main( int argc, char *argv[] )
     exit( 1 ); //exit for now until a version of qgis is capable of running non interactive
   }
 
-  QCoreApplication::setOrganizationName( QgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( QgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( QgsApplication::QGIS_APPLICATION_NAME );
+  QCoreApplication::setOrganizationName( QgsApplication::NGQGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( QgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( QgsApplication::NGQGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   // Initialize the default surface format for all
@@ -1631,7 +1634,7 @@ int main( int argc, char *argv[] )
     QApplication::setFont( defaultFont );
   }
 
-  QgisApp *qgis = new QgisApp( mypSplash, qgisAppOptions, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
+  QgisApp *qgis = new NGQgisApp( mypSplash, qgisAppOptions, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
   qgis->setObjectName( u"QgisApp"_s );
   qgis->setCustomization( std::move( customization ) );
 

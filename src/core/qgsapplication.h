@@ -174,6 +174,9 @@ class CORE_EXPORT QgsApplication : public QApplication
   static const char *QGIS_ORGANIZATION_NAME;
   static const char *QGIS_ORGANIZATION_DOMAIN;
   static const char *QGIS_APPLICATION_NAME;
+  static const char *NGQGIS_ORGANIZATION_NAME;
+  static const char *NGQGIS_ORGANIZATION_DOMAIN;
+  static const char *NGQGIS_APPLICATION_NAME;
 #ifndef SIP_RUN
 
   /**
@@ -1306,6 +1309,10 @@ private:
   std::unique_ptr<QTranslator> mQgisTranslator;
   std::unique_ptr<QTranslator> mQtTranslator;
   std::unique_ptr<QTranslator> mQtBaseTranslator;
+
+  std::unique_ptr<QTranslator> mNextgisTranslator;
+  std::unique_ptr<QTranslator> mNgstdCoreTranslator;
+  std::unique_ptr<QTranslator> mNgstdFrameworkTranslator;
 
   std::unique_ptr<QgsDataItemProviderRegistry> mDataItemProviderRegistry;
   QgsAuthManager *mAuthManager = nullptr;

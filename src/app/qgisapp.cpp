@@ -228,6 +228,7 @@ using namespace Qt::StringLiterals;
 #include "qgscrashhandler.h"
 
 #include "qgisapp.h"
+#include "ngcustomization.h"
 #include "moc_qgisapp.cpp"
 #include "qgisappinterface.h"
 #include "qgisappstylesheet.h"
@@ -3561,7 +3562,6 @@ void QgisApp::createToolBars()
   // qmainwindow::saveState and qmainwindow::restoreState
   // work properly
 
-  QList<QToolBar *> toolbarMenuToolBars;
   toolbarMenuToolBars
     << mFileToolBar
     << mDataSourceManagerToolBar
@@ -3574,6 +3574,7 @@ void QgisApp::createToolBars()
     << mSelectionToolBar
     << mPluginToolBar
     << mHelpToolBar
+    << mNGAccountToolBar
     << mRasterToolBar
     << mVectorToolBar
     << mDatabaseToolBar
@@ -4179,8 +4180,10 @@ void QgisApp::setIconSizes( int size )
   const auto constToolbars = toolbars;
   for ( QToolBar *toolbar : constToolbars )
   {
-    QString className = toolbar->parent()->metaObject()->className();
-    if ( className == "QgisApp"_L1 )
+    const QString className = toolbar->parent()->metaObject()->className();
+    const QString objectName = toolbar->parent()->objectName();
+
+    if ( className == "QgisApp"_L1 || objectName == u"QgisApp"_s )
     {
       toolbar->setIconSize( iconSize );
     }
@@ -12714,6 +12717,7 @@ QMap<QString, QString> QgisApp::optionsPagesMap()
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), u"mOptionsLocatorSettings"_s );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), u"mOptionsPageAcceleration"_s );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Advanced" ), QCoreApplication::translate( "QgsOptionsBase", "Advanced" ) );
+    sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ) );
   } );
 
   QMap<QString, QString> pages = sOptionsPagesMap;
@@ -12994,7 +12998,7 @@ void QgisApp::pyQgisApiDocumentation()
 void QgisApp::reportaBug()
 {
   QgsSettings settings;
-  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, tr( "https://qgis.org/resources/support/bug-reporting/" ) ).toString();
+  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, nextgisDomain() + u"/bugreport"_s ).toString();
   openURL( reportaBugUrl, false );
 }
 
@@ -13022,7 +13026,7 @@ void QgisApp::supportProviders()
 void QgisApp::helpQgisHomePage()
 {
   QgsSettings settings;
-  QString helpQgisHomePageUrl = settings.value( u"qgis/helpQgisHomePageUrl"_s, u"https://qgis.org"_s ).toString();
+  QString helpQgisHomePageUrl = settings.value( u"qgis/helpQgisHomePageUrl"_s, nextgisDomain() + u"/nextgis-qgis"_s ).toString();
   openURL( helpQgisHomePageUrl, false );
 }
 

@@ -20,6 +20,7 @@ add_subdirectory(pkipkcs12)
 add_subdirectory(apiheader)
 add_subdirectory(maptiler_hmacsha256)
 add_subdirectory(awss3)
+add_subdirectory(nextgis)
 
 if (WITH_OAUTH2_PLUGIN)
   add_subdirectory(oauth2)

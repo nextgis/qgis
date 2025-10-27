@@ -75,8 +75,8 @@ const QString QgsAuthManager::AUTH_MAN_TAG = QObject::tr( "Authentication Manage
 const QString QgsAuthManager::AUTH_CFG_REGEX = u"authcfg=([a-z]|[A-Z]|[0-9]){7}"_s;
 
 
-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME_BASE( "QGIS-Master-Password" );
-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "QGIS" );
+const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME_BASE( "NextGIS-Master-Password" );
+const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "NextGIS" );
 
 const QgsSettingsEntryBool *QgsAuthManager::settingsGenerateRandomPasswordForPasswordHelper
   = new QgsSettingsEntryBool( u"generate-random-password-for-keychain"_s, QgsSettingsTree::sTreeAuthentication, true, u"Whether a random password should be automatically generated for the authentication database and stored in the system keychain."_s );

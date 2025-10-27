@@ -3538,6 +3538,7 @@ void QgisApp::createToolBars()
                       << mSelectionToolBar
                       << mPluginToolBar
                       << mHelpToolBar
+                      << mNGAccountToolBar
                       << mRasterToolBar
                       << mVectorToolBar
                       << mDatabaseToolBar
@@ -4132,7 +4133,9 @@ void QgisApp::setIconSizes( int size )
   for ( QToolBar *toolbar : constToolbars )
   {
     QString className = toolbar->parent()->metaObject()->className();
-    if ( className == QLatin1String( "QgisApp" ) )
+    QString objectName = toolbar->parent()->objectName();
+
+    if ( className == QLatin1String( "QgisApp" ) || objectName == QLatin1String( "QgisApp" ) )
     {
       toolbar->setIconSize( iconSize );
     }
@@ -12476,6 +12479,7 @@ QMap<QString, QString> QgisApp::optionsPagesMap()
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), QStringLiteral( "mOptionsLocatorSettings" ) );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), QStringLiteral( "mOptionsPageAcceleration" ) );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Advanced" ), QCoreApplication::translate( "QgsOptionsBase", "Advanced" ) );
+    sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ) );
   } );
 
   QMap<QString, QString> pages = sOptionsPagesMap;
@@ -12758,7 +12762,7 @@ void QgisApp::pyQgisApiDocumentation()
 void QgisApp::reportaBug()
 {
   QgsSettings settings;
-  QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ), QString( nextgisDomain() + "/support" ) ).toString();
+  QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ), QString( nextgisDomain() + "/bugreport" ) ).toString();
   openURL( reportaBugUrl, false );
 }
 
@@ -12786,7 +12790,7 @@ void QgisApp::supportProviders()
 void QgisApp::helpQgisHomePage()
 {
   QgsSettings settings;
-  QString helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ),  QString( nextgisDomain() + "/nextgis-qgis" ) ).toString();
+  QString helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ), QString( nextgisDomain() + "/nextgis-qgis" ) ).toString();
   openURL( helpQgisHomePageUrl, false );
 }
 

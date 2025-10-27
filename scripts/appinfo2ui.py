@@ -25,7 +25,7 @@ from xml.etree import ElementTree as et
 
 strings = {}
 
-d = et.parse("linux/org.qgis.qgis.appdata.xml.in")
+d = et.parse("linux/com.nextgis.ngqgis.appdata.xml.in")
 
 r = d.getroot()
 for elem in ["name", "summary", "description"]:
@@ -39,7 +39,7 @@ for elem in ["name", "summary", "description"]:
             )
             strings[t] = 1
 
-f = open("linux/org.qgis.qgis.desktop.in")
+f = open("linux/com.nextgis.ngqgis.desktop.in")
 
 for r in f.readlines():
     r = r.strip()

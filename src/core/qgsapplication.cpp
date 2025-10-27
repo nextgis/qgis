@@ -173,6 +173,9 @@ bool ABISYM( QgsApplication::mRunningFromBuildDir ) = false;
 const char *QgsApplication::QGIS_ORGANIZATION_NAME = "QGIS";
 const char *QgsApplication::QGIS_ORGANIZATION_DOMAIN = "qgis.org";
 const char *QgsApplication::QGIS_APPLICATION_NAME = "QGIS3";
+const char *QgsApplication::NGQGIS_ORGANIZATION_NAME = NEXTGIS;
+const char *QgsApplication::NGQGIS_ORGANIZATION_DOMAIN = NEXTGIS_DOMAIN;
+const char *QgsApplication::NGQGIS_APPLICATION_NAME = QGIS_APP_NAME;
 QgsApplication::ApplicationMembers *QgsApplication::sApplicationMembers = nullptr;
 QgsAuthManager *QgsApplication::sAuthManager = nullptr;
 int ABISYM( QgsApplication::sMaxThreads ) = -1;
@@ -362,7 +365,7 @@ void QgsApplication::init( QString profileFolder )
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
         setPrefixPath( applicationDirPath(), true );
 #elif defined(ANDROID)
-        // this is "/data/data/org.qgis.qgis" in android
+        // this is "/data/data/com.nextgis.ngqgis" in android
         QDir myDir( QDir::homePath() );
         myDir.cdUp();
         QString myPrefix = myDir.absolutePath();
@@ -467,6 +470,11 @@ void QgsApplication::init( QString profileFolder )
 #endif
 
   {
+    QgsScopedRuntimeProfile profile( tr( "Load NextGIS fonts" ) );
+    fontManager()->installNextGisFonts();
+  }
+
+  {
     QgsScopedRuntimeProfile profile( tr( "Load user fonts" ) );
     fontManager()->installUserFonts();
   }
@@ -518,6 +526,21 @@ void QgsApplication::installTranslators()
     mQtBaseTranslator.reset( );
 
   }
+  if ( mNextgisTranslator )
+  {
+    removeTranslator( mNextgisTranslator.get() );
+    mNextgisTranslator.reset( );
+  }
+  if ( mNgstdCoreTranslator )
+  {
+    removeTranslator( mNgstdCoreTranslator.get() );
+    mNgstdCoreTranslator.reset( );
+  }
+  if ( mNgstdFrameworkTranslator )
+  {
+    removeTranslator( mNgstdFrameworkTranslator.get() );
+    mNgstdFrameworkTranslator.reset( );
+  }
 
   if ( *sTranslation() != QLatin1String( "C" ) )
   {
@@ -560,6 +583,36 @@ void QgsApplication::installTranslators()
     else
     {
       QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
+    }
+
+    mNextgisTranslator = std::make_unique<QTranslator>( this );
+    if ( mNextgisTranslator->load( QStringLiteral( "ngqgis_" ) + *sTranslation(), i18nPath() ) )
+    {
+      installTranslator( mNextgisTranslator.get() );
+    }
+    else
+    {
+      QgsDebugMsgLevel( QStringLiteral( "loading of nextgis translation failed %1/ngqgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
+    }
+
+    mNgstdCoreTranslator = std::make_unique<QTranslator>( this );
+    if ( mNgstdCoreTranslator->load( QStringLiteral( "ngstd_core_" ) + *sTranslation(), i18nPath() ) )
+    {
+      installTranslator( mNgstdCoreTranslator.get() );
+    }
+    else
+    {
+      QgsDebugMsgLevel( QStringLiteral( "loading of ngstd_core translation failed %1/ngstd_core_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
+    }
+
+    mNgstdFrameworkTranslator = std::make_unique<QTranslator>( this );
+    if ( mNgstdFrameworkTranslator->load( QStringLiteral( "ngstd_framework_" ) + *sTranslation(), i18nPath() ) )
+    {
+      installTranslator( mNgstdFrameworkTranslator.get() );
+    }
+    else
+    {
+      QgsDebugMsgLevel( QStringLiteral( "loading of ngstd_framework translation failed %1/ngstd_framework_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
     }
   }
 }
@@ -1009,7 +1062,7 @@ QString QgsApplication::resolvePkgPath()
   else
   {
 #if defined(ANDROID)
-    // this is "/data/data/org.qgis.qgis" in android
+    // this is "/data/data/com.nextgis.ngqgis" in android
     QDir dir( QDir::homePath() );
     dir.cdUp();
     prefixPath = dir.absolutePath();
@@ -1565,7 +1618,9 @@ QgsAuthManager *QgsApplication::authManager()
   {
     // no QgsApplication instance
     if ( !sAuthManager )
+    {
       sAuthManager = QgsAuthManager::instance();
+    }
     return sAuthManager;
   }
 }

@@ -3,6 +3,13 @@ if(NOT WIN32)
 SUBDIRS(${CMAKE_SOURCE_DIR}/external/qt-unix-signals)
 endif()
 
+set(NG_APP_SRCS
+  ngsaboutdialog.cpp
+  ngcustomization.cpp
+  ngupdater.cpp
+  options/ngauthoptions.cpp
+)
+
 set(QGIS_APP_SRCS
   ${CMAKE_SOURCE_DIR}/external/nmea/gmath.c
   ${CMAKE_SOURCE_DIR}/external/nmea/time.c
@@ -307,6 +314,8 @@ set(QGIS_APP_SRCS
   mesh/qgsmeshselectbyexpressiondialog.cpp
 
   vector/qgsvectorelevationpropertieswidget.cpp
+
+  ${NG_APP_SRCS}
 )
 
 if (WITH_SPATIALITE)
@@ -613,6 +622,7 @@ target_link_libraries(qgis_app
 )
 
 target_compile_definitions(qgis_app PRIVATE "-DQT_NO_FOREACH")
+target_compile_definitions(qgis_app PRIVATE "CMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"")
 
 if (USE_PRECOMPILED_HEADERS)
   target_precompile_headers(qgis_app PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/src/core/qgis.h>)
@@ -631,6 +641,10 @@ endif()
 
 if (WITH_3D)
   target_link_libraries(qgis_app qgis_3d)
+endif()
+
+if(WITH_NGSTD)
+  target_link_libraries(qgis_app ${NGSTD_LIBRARIES})
 endif()
 
 GENERATE_EXPORT_HEADER(

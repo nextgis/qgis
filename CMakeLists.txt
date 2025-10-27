@@ -1,6 +1,13 @@
 #############################################################
 # CMake settings
 cmake_minimum_required(VERSION 3.22.0)
+
+set(NEXTGIS "NextGIS")
+set(NEXTGIS_DOMAIN "nextgis.com")
+set(NEXTGIS_REVERSED_DOMAIN "com.nextgis")
+set(NEXTGIS_PREFIX ng)
+set(PACKAGE_VENDOR "${NEXTGIS}")
+
 set(CMAKE_COLOR_MAKEFILE ON)
 set(CMAKE_AUTORCC ON)
 # set path to additional CMake modules
@@ -63,12 +70,22 @@ set(CPACK_PACKAGE_VERSION_MINOR "44")
 set(CPACK_PACKAGE_VERSION_PATCH "4")
 set(COMPLETE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
 set(RELEASE_NAME "Solothurn")
+
+string(TIMESTAMP CURRENT_YEAR "%y")
+string(TIMESTAMP CURRENT_MONTH "%m")
+math(EXPR CURRENT_MONTH "${CURRENT_MONTH}*1")
+
+set(NEXTGIS_QGIS_VERSION_MAJOR ${CURRENT_YEAR})
+set(NEXTGIS_QGIS_VERSION_MINOR ${CURRENT_MONTH})
+set(NEXTGIS_QGIS_VERSION_PATCH 0)
+set(NEXTGIS_QGIS_VERSION ${NEXTGIS_QGIS_VERSION_MAJOR}.${NEXTGIS_QGIS_VERSION_MINOR}.${NEXTGIS_QGIS_VERSION_PATCH})
+
 project(qgis VERSION ${COMPLETE_VERSION})
 
 if (APPLE)
-  set(QGIS_APP_NAME "QGIS")
+  set(QGIS_APP_NAME "NGQGIS")
 else()
-  set(QGIS_APP_NAME "qgis")
+  set(QGIS_APP_NAME "ngqgis")
 endif()
 
 # Note the version no is Mmmpp for Major/minor/patch, 0-padded, thus '10100' for 1.1.0
@@ -438,6 +455,9 @@ if(WITH_CORE)
     endif()
   endif()
 
+  # Borsch
+  include(cmake/borsch/cmake/FindAnyProject.cmake)
+
   # required
   find_package(Proj REQUIRED)
   message(STATUS "Found Proj: ${PROJ_VERSION} ${PROJ_DIR}")
@@ -447,7 +467,7 @@ if(WITH_CORE)
 
   find_package(GEOS REQUIRED)
   message(STATUS "Found Geos: ${GEOS_VERSION} ${GEOS_DIR}")
-  find_package(GDAL REQUIRED)
+  find_anyproject(GDAL MODULE REQUIRED)
   message(STATUS "Found GDAL: ${GDAL_VERSION} ${GDAL_DIR}")
   find_package(EXPAT REQUIRED)
   set (WITH_INTERNAL_SPATIALINDEX FALSE CACHE BOOL "Determines whether spatialindex should be built from internal copy")
@@ -547,6 +567,12 @@ if(WITH_CORE)
     find_package(Draco REQUIRED)
     message(STATUS "Found Draco: ${DRACO_LIBRARY} (${DRACO_VERSION})")
     set(HAVE_DRACO TRUE)  # used in qgisconfig.h
+  endif()
+
+  if (WITH_NGSTD)
+    find_anyproject(NGSTD DEFAULT ON COMPONENTS core framework)
+    message(STATUS "Found NGSTD: ${NGSTD_LIBRARY} (${NGSTD_VERSION})")
+    set(HAVE_NGSTD TRUE)  # used in qgisconfig.h
   endif()
 
   #############################################################
@@ -1022,7 +1048,7 @@ if (WITH_CORE)
       set (DEFAULT_BIN_SUBDIR     bin)
       set (DEFAULT_CGIBIN_SUBDIR  bin)
       set (DEFAULT_LIB_SUBDIR     lib${LIB_SUFFIX})
-      set (DEFAULT_DATA_SUBDIR    share/qgis)
+      set (DEFAULT_DATA_SUBDIR    share/ngqgis)
       set (DEFAULT_LIBEXEC_SUBDIR lib${LIB_SUFFIX}/qgis)
       set (DEFAULT_PLUGIN_SUBDIR  lib${LIB_SUFFIX}/qgis/plugins)
       set (DEFAULT_INCLUDE_SUBDIR include/qgis)

@@ -22,8 +22,7 @@ endmacro(ADD_TRANSLATION_FILES)
 # make sure the output directory exists
 file(MAKE_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/i18n)
 
-
-set(TS_FILES qgis_ar.ts qgis_az.ts qgis_bg.ts qgis_bs.ts qgis_ca.ts qgis_cs.ts qgis_da.ts qgis_de.ts qgis_en_US.ts qgis_es.ts qgis_et.ts qgis_eu.ts qgis_fi.ts qgis_fr.ts qgis_gl.ts qgis_hu.ts qgis_is.ts qgis_it.ts qgis_ja.ts qgis_ko.ts qgis_lt.ts qgis_lv.ts qgis_nb.ts qgis_nl.ts qgis_pl.ts qgis_pt_BR.ts qgis_pt_PT.ts qgis_ro.ts qgis_ru.ts qgis_sc.ts qgis_sk.ts qgis_sv.ts qgis_tr.ts qgis_uk.ts qgis_vi.ts qgis_zh-Hans.ts qgis_zh-Hant.ts)
+set(TS_FILES qgis_ar.ts qgis_az.ts qgis_bg.ts qgis_bs.ts qgis_ca.ts qgis_cs.ts qgis_da.ts qgis_de.ts qgis_en_US.ts qgis_es.ts qgis_et.ts qgis_eu.ts qgis_fi.ts qgis_fr.ts qgis_gl.ts qgis_hu.ts qgis_is.ts qgis_it.ts qgis_ja.ts qgis_ko.ts qgis_lt.ts qgis_lv.ts qgis_nb.ts qgis_nl.ts qgis_pl.ts qgis_pt_BR.ts qgis_pt_PT.ts qgis_ro.ts qgis_ru.ts qgis_sc.ts qgis_sk.ts qgis_sv.ts qgis_tr.ts qgis_uk.ts qgis_vi.ts qgis_zh-Hans.ts qgis_zh-Hant.ts ngqgis_ru.ts)
 
 ADD_TRANSLATION_FILES (QM_FILES ${TS_FILES})
 
@@ -32,18 +31,18 @@ configure_file(${CMAKE_SOURCE_DIR}/scripts/ts2appinfo.py.in ${CMAKE_BINARY_DIR}/
 
 if (UNIX AND NOT APPLE AND PYQT_FOUND)
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/org.qgis.qgis.desktop ${CMAKE_BINARY_DIR}/org.qgis.qgis.appdata.xml
+    OUTPUT ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.desktop ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.appdata.xml
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     COMMAND ${Python_EXECUTABLE}
     ARGS ${CMAKE_BINARY_DIR}/ts2appinfo.py "${CMAKE_BINARY_DIR}"
     COMMENT "Updating appinfo files..."
-    DEPENDS ${QM_FILES} ${CMAKE_SOURCE_DIR}/linux/org.qgis.qgis.desktop.in ${CMAKE_SOURCE_DIR}/linux/org.qgis.qgis.appdata.xml.in
+    DEPENDS ${QM_FILES} ${CMAKE_SOURCE_DIR}/linux/com.nextgis.ngqgis.desktop.in ${CMAKE_SOURCE_DIR}/linux/com.nextgis.ngqgis.appdata.xml.in
   )
 
-  set(MD_FILES ${CMAKE_BINARY_DIR}/org.qgis.qgis.desktop ${CMAKE_BINARY_DIR}/org.qgis.qgis.appdata.xml)
+  set(MD_FILES ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.desktop ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.appdata.xml)
 
-  install(FILES ${CMAKE_BINARY_DIR}/org.qgis.qgis.desktop DESTINATION share/applications)
-  install(FILES ${CMAKE_BINARY_DIR}/org.qgis.qgis.appdata.xml DESTINATION share/metainfo)
+  install(FILES ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.desktop DESTINATION share/applications)
+  install(FILES ${CMAKE_BINARY_DIR}/com.nextgis.ngqgis.appdata.xml DESTINATION share/metainfo)
 endif()
 
 # creating a custom target is needed to make the files build

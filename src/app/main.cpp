@@ -31,6 +31,7 @@
 #include <QStyle>
 #include <QStyleFactory>
 #include <QImageReader>
+#include <QLibraryInfo>
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QScreen>
@@ -112,6 +113,8 @@ typedef SInt32 SRefCon;
 #include "qgsopenclutils.h"
 #endif
 
+#include "ngcustomization.h"
+
 /**
  * Print QGIS version
  */
@@ -129,7 +132,8 @@ void usage( const QString &appName )
   QStringList msg;
 
   msg
-    << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
+    << QStringLiteral( NEXTGIS ) << QStringLiteral( " QGIS - " ) << QStringLiteral( NEXTGIS_QGIS_VERSION ) << QStringLiteral( " (" ) << QStringLiteral( VERSION ) << QStringLiteral( ")\n" )
+    << QStringLiteral( NEXTGIS ) << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
     << QStringLiteral( "Usage: " ) << appName << QStringLiteral( " [OPTION] [FILE]\n" )
     << QStringLiteral( "  OPTION:\n" )
     << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
@@ -945,9 +949,9 @@ int main( int argc, char *argv[] )
     QgsCustomization::instance()->setEnabled( false );
   }
 
-  QCoreApplication::setOrganizationName( QgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( QgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( QgsApplication::QGIS_APPLICATION_NAME );
+  QCoreApplication::setOrganizationName( QgsApplication::NGQGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( QgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( QgsApplication::NGQGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   // this is implicit in Qt 6 now
@@ -1571,7 +1575,7 @@ int main( int argc, char *argv[] )
     QApplication::setFont( defaultFont );
   }
 
-  QgisApp *qgis = new QgisApp( mypSplash, qgisAppOptions, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
+  QgisApp *qgis = new NGQgisApp( mypSplash, qgisAppOptions, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
   qgis->setObjectName( QStringLiteral( "QgisApp" ) );
 
   QgsApplication::connect(

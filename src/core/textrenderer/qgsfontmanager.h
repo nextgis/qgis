@@ -225,6 +225,13 @@ class CORE_EXPORT QgsFontManager : public QObject
     void installUserFonts() SIP_SKIP;
 
     /**
+     * Installs the NextGIS bundled fonts as application fonts.
+     *
+     * \note Not available in Python bindings
+     */
+    void installNextGisFonts() SIP_SKIP;
+
+    /**
      * Tries to download and install the specified font \a family.
      *
      * This method will attempt to download missing fonts, if the font download URL

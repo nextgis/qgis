@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>com.nextgis.ngqgis.desktop</id>
+  <name>NextGIS QGIS</name>
+  <summary>A Geographic Information System</summary>
+  <screenshots>
+    <screenshot type="default"><caption>NextGIS QGIS</caption><image type="source">https://nextgis.com/wp-content/uploads/2023/02/group-903-1024x697.png</image></screenshot>
+  </screenshots>
+  <developer id="com.nextgis">
+    <name>NextGIS</name>
+  </developer>
+  <description>
+    <p>NextGIS QGIS is a full-featured desktop GIS for creating and editing data, producing maps and performing analysis.</p>
+  </description>
+
+  <metadata_license>CC-BY-3.0</metadata_license>
+  <project_license>GPL-2.0+</project_license>
+  <url type="bugtracker">https://nextgis.com/bugreport</url>
+  <url type="donation">https://ko-fi.com/nextgis</url>
+  <url type="help">https://nextgis.com/support</url>
+  <url type="homepage">https://nextgis.com/nextgis-qgis</url>
+
+  <project_group>NextGIS</project_group>
+  <releases>
+    <release version="25.8.1" date="2025-08-28" />
+  </releases>
+  <launchable type="desktop-id">com.nextgis.ngqgis.desktop</launchable>
+  <provides>
+    <binary>ngqgis</binary>
+  </provides>
+</component>

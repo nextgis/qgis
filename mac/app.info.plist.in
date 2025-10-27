@@ -5,23 +5,23 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleName</key>
-	<string>QGIS</string>
+	<string>${NEXTGIS} QGIS</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.qgis.qgis3</string>
+	<string>${NEXTGIS_REVERSED_DOMAIN}.${QGIS_APP_NAME}</string>
 	<key>CFBundleExecutable</key>
 	<string>${QGIS_APP_NAME}</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>QGIS</string>
+	<string>${NEXTGIS} QGIS</string>
 	<key>CFBundleGetInfoString</key>
-	<string>${QGIS_APP_NAME} ${COMPLETE_VERSION}-${RELEASE_NAME} (${SHA}), © 2002-2019 QGIS Development Team</string>
+	<string>${NEXTGIS} ${QGIS_APP_NAME} ${COMPLETE_VERSION} (${SHA}), © ${CURRENT_YEAR} ${NEXTGIS}</string>
 	<key>CFBundleShortVersionString</key>
 	<string>${COMPLETE_VERSION}</string>
 	<key>CFBundleVersion</key>
 	<string>${COMPLETE_VERSION} (${SHA})</string>
 	<key>CFBundleIconFile</key>
-	<string>qgis.icns</string>
+	<string>qgis_icon.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CSResourcesFileMapped</key>
@@ -30,23 +30,23 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS Project document</string>
+			<string>${NEXTGIS} QGIS Project document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>
-			<string>qgs.icns</string>
+			<string>qgis_icon.icns</string>
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>qgs</string>
 			</array>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
-				<string>QGIS</string>
+				<string>${NEXTGIS} QGIS</string>
 			</array>
 		</dict>
     <dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS Project zipped container</string>
+			<string>${NEXTGIS} QGIS Project zipped container</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>
@@ -195,7 +195,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS style document</string>
+			<string>${NEXTGIS} QGIS style document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>
@@ -219,7 +219,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS composer template</string>
+			<string>${NEXTGIS} QGIS composer template</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>
@@ -231,7 +231,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS layer definition document</string>
+			<string>${NEXTGIS} QGIS layer definition document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>

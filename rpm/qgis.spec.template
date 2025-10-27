@@ -286,7 +286,7 @@ rm -f %{buildroot}%{_datadir}/%{name}/doc/INSTALL*
 %{_mandir}/man1/%{name}.1*
 %dir %{_datadir}/%{name}/
 %{_datadir}/mime/packages/qgis.xml
-%{_datadir}/metainfo/org.qgis.qgis.appdata.xml
+%{_datadir}/metainfo/com.nextgis.ngqgis.appdata.xml
 %{_datadir}/icons/hicolor/*/apps/*
 %{_datadir}/icons/hicolor/*/mimetypes/*
 %{_datadir}/applications/*%{name}.desktop

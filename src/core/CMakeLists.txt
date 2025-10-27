@@ -19,6 +19,11 @@ if (WITH_PDF4QT)
   SUBDIRS(${CMAKE_SOURCE_DIR}/external/PDF4QT)
 endif()
 
+set(NG_CORE_SRCS
+)
+set(NG_CORE_HDRS
+)
+
 set(QGIS_CORE_SRCS
   ${CMAKE_SOURCE_DIR}/external/kdbush/include/kdbush.hpp
 
@@ -1030,6 +1035,7 @@ set(QGIS_CORE_SRCS
   qgsuserprofile.cpp
   qgsuserprofilemanager.cpp
 
+  ${NG_CORE_SRCS}
 )
 
 if (WITH_INTERNAL_POLY2TRI)
@@ -2164,6 +2170,8 @@ set(QGIS_CORE_PRIVATE_HDRS
   providers/ogr/qgscplerrorhandler_p.h
 
   textrenderer/qgstextrenderer_p.h
+
+  ${NG_CORE_HDRS}
 )
 
 if (NOT WITH_QTWEBKIT)
@@ -2589,7 +2597,7 @@ else()
     FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
     MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/mac/framework.info.plist.in"
     MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${COMPLETE_VERSION}
-    MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis3_core
+    MACOSX_FRAMEWORK_IDENTIFIER com.nextgis.ngqgis_core
     BUILD_WITH_INSTALL_RPATH TRUE
     PUBLIC_HEADER "${QGIS_CORE_HDRS}"
     LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"

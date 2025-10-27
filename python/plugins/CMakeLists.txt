@@ -53,7 +53,11 @@ if (WITH_GUI)
 	add_subdirectory(db_manager)
 endif()
 add_subdirectory(processing)
-add_subdirectory(grassprovider)
+
+set (WITH_PYTHON_GRASS_PLUGIN TRUE CACHE BOOL "Determines whether the GRASS python plugin should be built")
+if (WITH_PYTHON_GRASS_PLUGIN)
+  add_subdirectory(grassprovider)
+endif()
 add_subdirectory(MetaSearch)
 
 PY_COMPILE(staged-plugins "${PYTHON_OUTPUT_DIRECTORY}/plugins")

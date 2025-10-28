@@ -22,6 +22,7 @@
 
   <project_group>NextGIS</project_group>
   <releases>
+    <release version="25.10.1" date="2025-10-28" />
     <release version="25.8.1" date="2025-08-28" />
   </releases>
   <launchable type="desktop-id">com.nextgis.ngqgis.desktop</launchable>

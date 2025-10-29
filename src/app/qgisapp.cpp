@@ -601,7 +601,7 @@ static void setTitleBarText_( QWidget &qgisApp )
   if ( QgsProject::instance()->isDirty() )
     caption.prepend( '*' );
 
-  caption += QgisApp::tr( "QGIS" );
+  caption += NEXTGIS " " + QgisApp::tr( "QGIS" );
 
   if ( Qgis::version().endsWith( QLatin1String( "Master" ) ) )
   {

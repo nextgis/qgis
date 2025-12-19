@@ -44,7 +44,6 @@ bool QgsAuthNextGISEdit::validateConfig()
 
 QgsStringMap QgsAuthNextGISEdit::configMap() const
 {
-  mSettings->setValue( "nextgis/send_crashes", ngAuthOptions->sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", ngAuthOptions->endpointEdit->text() );
   mSettings->setValue( "nextgis/auth_endpoint", ngAuthOptions->authEndpointEdit->text() );
   mSettings->setValue( "nextgis/token_endpoint", ngAuthOptions->tokenEndpointEdit->text() );
@@ -62,7 +61,6 @@ QgsStringMap QgsAuthNextGISEdit::configMap() const
     NGAccess::instance().setUseCodeChallenge( true );
   }
   NGAccess::instance().setEndPoint( ngAuthOptions->endpointEdit->text(), type );
-  NGAccess::instance().initSentry( ngAuthOptions->sendCrashes->isChecked(), "" );
 
   emit NGAccess::instance().userInfoUpdated();
 

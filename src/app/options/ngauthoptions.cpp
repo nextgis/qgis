@@ -41,11 +41,13 @@ void NGAuthOptions::onUserInfoUpdated()
 void NGAuthOptions::ngInitControls()
 {
 #ifdef HAVE_NGSTD
+  const bool isAuthorized = NGAccess::instance().isUserAuthorized();
+
   if ( NGAccess::instance().isEnterprise() )
   {
     authGroupBox->hide();
   }
-  else if ( NGAccess::instance().isUserAuthorized() )
+  else if ( isAuthorized )
   {
     avatar->setText( QString( "<html><head/><body><p><img src=\"%1\" height=\"64\"/></p></body></html>" )
                        .arg( NGAccess::instance().avatarFilePath() ) );
@@ -61,6 +63,8 @@ void NGAuthOptions::ngInitControls()
                                 .arg( supportedText ) );
     authGroupBox->show();
     signinButton->setText( tr( "Exit" ) );
+
+    setConnectionControlsEnabled( false );
   }
   else
   {
@@ -68,6 +72,8 @@ void NGAuthOptions::ngInitControls()
     descriptionText->setText( tr( "Not authorized" ) );
     authGroupBox->show();
     signinButton->setText( tr( "Sign in" ) );
+
+    setConnectionControlsEnabled( true );
   }
 #if defined( NGLIB_COMPUTE_VERSION ) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION( 0, 11, 0 )
   int index = mSettings->value( "nextgis/auth_type", 0 ).toInt();
@@ -117,6 +123,26 @@ void NGAuthOptions::updateAuthControls( int type )
       codeChallengeCheckBox->show();
     }
   }
+}
+
+void NGAuthOptions::setConnectionControlsEnabled( bool enabled )
+{
+  endpointEdit->setEnabled( enabled );
+  authEndpointEdit->setEnabled( enabled );
+  tokenEndpointEdit->setEnabled( enabled );
+  userInfoEndpointEdit->setEnabled( enabled );
+  authTypeSelector->setEnabled( enabled );
+  codeChallengeCheckBox->setEnabled( enabled );
+
+  tokenEndpointLabel->setEnabled( enabled );
+  userInfoEndpoinLabel->setEnabled( enabled );
+  enpointLabel->setEnabled( enabled );
+  typeLabel->setEnabled( enabled );
+  authEndpointLabel->setEnabled( enabled );
+  codeChallengeLabel->setEnabled( enabled );
+
+  availableEndpointLabel->setEnabled( enabled );
+  defaultsButton->setEnabled( enabled );
 }
 
 void NGAuthOptions::init( QgsSettings *settings )

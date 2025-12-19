@@ -43,6 +43,7 @@ class APP_EXPORT NGAuthOptions : public QWidget, public Ui::NGAuthOptions
   private:
     void ngInitControls();
     void updateAuthControls( int type );
+    void setConnectionControlsEnabled( bool enabled );
 
     QgsSettings *mSettings = nullptr;
 };

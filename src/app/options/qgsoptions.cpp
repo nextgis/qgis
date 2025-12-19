@@ -1956,7 +1956,6 @@ void QgsOptions::saveOptions()
 
 #ifdef HAVE_NGSTD
   // NextGIS settings
-  mSettings->setValue( "nextgis/send_crashes", mOptionsPageNextGIS->sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", mOptionsPageNextGIS->endpointEdit->text() );
   mSettings->setValue( "nextgis/auth_endpoint", mOptionsPageNextGIS->authEndpointEdit->text() );
   mSettings->setValue( "nextgis/token_endpoint", mOptionsPageNextGIS->tokenEndpointEdit->text() );
@@ -1975,8 +1974,6 @@ void QgsOptions::saveOptions()
   }
   NGAccess::instance().setEndPoint( mOptionsPageNextGIS->endpointEdit->text(), type );
   NGAccess::instance().checkEndpointAsync( mOptionsPageNextGIS->endpointEdit->text() );
-
-  NGAccess::instance().initSentry( mOptionsPageNextGIS->sendCrashes->isChecked(), "" );
 #endif // HAVE_NGSTD
 
   //save variables

@@ -186,7 +186,6 @@ void NGQgisApp::createToolBars()
   NGSignInButton *toolbAuth = new NGSignInButton( QLatin1String( "tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN" ), scopes, endPointStr, type );
 
   QString version = QLatin1String( NEXTGIS_QGIS_VERSION ) + " (" + QLatin1String( VERSION ) + ")";
-  NGAccess::instance().initSentry( settings.value( "nextgis/send_crashes", "0" ).toBool(), SENTRY_KEY, version );
 #else
   NGSignInButton *toolbAuth = new NGSignInButton( QLatin1String( "tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN" ), QLatin1String( "user_info.read" ) );
 #endif // NGLIB_VERSION_NUMBER > 1100

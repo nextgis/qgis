@@ -81,7 +81,6 @@ void NGAuthOptions::ngInitControls()
 
 #endif // NGLIB_VERSION_NUMBER > 1100
 
-  sendCrashes->setChecked( mSettings->value( "nextgis/send_crashes", "0" ).toBool() );
 #endif // HAVE_NGSTD
 }
 

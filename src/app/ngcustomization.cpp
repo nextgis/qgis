@@ -34,6 +34,7 @@
 #include "core/version.h"
 #include "framework/access/access.h"
 #include "framework/access/signbutton.h"
+#include "framework/access/signdialog.h"
 #endif // HAVE_NGSTD
 
 static const QString SENTRY_KEY = "https://71159235f0b542adb8ef214aa24f5aa6@sentry.nextgis.com/9";
@@ -191,6 +192,12 @@ void NGQgisApp::createToolBars()
 #endif // NGLIB_VERSION_NUMBER > 1100
   toolbAuth->setCursor( Qt::PointingHandCursor );
   mNGAccountToolBar->addWidget( toolbAuth );
+
+  QObject::connect(qobject_cast<NGSignDialog*>(toolbAuth->getDialog()), &NGSignDialog::settingsRequested, this, [this]
+  {
+      showOptionsDialog(this, QCoreApplication::translate("QgsOptionsBase", "NextGIS"));
+  });
+
   // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
 #endif // HAVE_NGSTD
 }

@@ -25,6 +25,7 @@
 #include "qgsmessagebaritem.h"
 #include "qgsapplication.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgsproject.h"
 
 #include <QMessageBox>
 #include <qchar.h>
@@ -149,11 +150,9 @@ void NGQgisApp::startUpdate()
   {
     if ( saveDirty() )
     {
+	  const auto currentProjectPath = QgsProject::instance()->fileName();
       closeProject();
-      QString lastProject;
-      if ( !mRecentProjects.isEmpty() )
-        lastProject = mRecentProjects.at( 0 ).path;
-      mNGUpdater->startUpdate( lastProject );
+	  mNGUpdater->startUpdate( currentProjectPath );
       qApp->exit( 0 );
     }
   }

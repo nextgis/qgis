@@ -25,11 +25,15 @@
 #include "qgsfileutils.h"
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QDebug>
 #include <QDir>
+#include <QCoreApplication>
 #include <QDirIterator>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QTemporaryFile>
 #include <QTemporaryDir>
+#include <qglobal.h>
 
 const QgsSettingsEntryStringList *QgsFontManager::settingsFontFamilyReplacements = new QgsSettingsEntryStringList( QStringLiteral( "fontFamilyReplacements" ), QgsSettingsTree::sTreeFonts, QStringList(), QStringLiteral( "Automatic font family replacements" ) );
 
@@ -152,6 +156,12 @@ void QgsFontManager::installUserFonts()
 
 void QgsFontManager::installNextGisFonts()
 {
+  if ( qobject_cast<QGuiApplication *>( QCoreApplication::instance() ) == nullptr )
+  {
+    QgsDebugError( QStringLiteral( "Skipping NextGIS font installation without QGuiApplication instance" ) );
+    return;
+  }
+
   QDir fontsDir(QgsApplication::pkgDataPath() + QStringLiteral( "/resources/fonts" ));
 
   QStringList filters;
@@ -161,6 +171,7 @@ void QgsFontManager::installNextGisFonts()
   QDirIterator it(fontsDir.path(), filters, QDir::Files, QDirIterator::IteratorFlag::Subdirectories);
   while (it.hasNext()) {
       QString fontPath = it.next();
+      qDebug() << "Installing additional font:" << fontPath;
       QFontDatabase::addApplicationFont( fontPath );
   }
 }

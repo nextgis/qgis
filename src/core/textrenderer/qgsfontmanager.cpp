@@ -24,9 +24,11 @@
 #include "qgssettingstree.h"
 #include "qgsziputils.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
 #include <QString>
@@ -159,6 +161,12 @@ void QgsFontManager::installUserFonts()
 
 void QgsFontManager::installNextGisFonts()
 {
+  if ( qobject_cast<QGuiApplication *>( QCoreApplication::instance() ) == nullptr )
+  {
+    QgsDebugError( QStringLiteral( "Skipping NextGIS font installation without QGuiApplication instance" ) );
+    return;
+  }
+
   QDir fontsDir(QgsApplication::pkgDataPath() + QStringLiteral( "/resources/fonts" ));
 
   QStringList filters;
@@ -168,6 +176,7 @@ void QgsFontManager::installNextGisFonts()
   QDirIterator it(fontsDir.path(), filters, QDir::Files, QDirIterator::IteratorFlag::Subdirectories);
   while (it.hasNext()) {
       QString fontPath = it.next();
+      qDebug() << "Installing additional font:" << fontPath;
       QFontDatabase::addApplicationFont( fontPath );
   }
 }

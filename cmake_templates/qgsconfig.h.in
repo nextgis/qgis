@@ -118,6 +118,7 @@
 #cmakedefine HAVE_DRACO
 
 #cmakedefine HAVE_NGSTD
+#cmakedefine NGSTD_VERSION "${NGSTD_VERSION}"
 
 #cmakedefine ENABLE_TESTS
 

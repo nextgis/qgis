@@ -151,6 +151,14 @@ NgsAboutDialog::NgsAboutDialog( QWidget *parent )
 
   details += tr( "QScintilla2 Version" ) + ": " + QSCINTILLA_VERSION_STR + "<br>";
 
+#ifdef HAVE_NGSTD
+#ifdef NGSTD_VERSION
+  details += tr( "NGSTD version" ) + ": " + QLatin1String( NGSTD_VERSION ) + "<br>";
+#else
+  details += tr( "NGSTD version" ) + ": " + tr( "Unknown" ) + "<br>";
+#endif
+#endif
+
 #ifdef QGISDEBUG
   details += tr( "This copy of QGIS writes debugging output." ) + "</div>";
 #endif

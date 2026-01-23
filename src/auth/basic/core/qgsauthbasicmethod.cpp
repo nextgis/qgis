@@ -29,12 +29,23 @@
 #include <QMutexLocker>
 #include <QRegularExpression>
 #include <QUuid>
+#include <QUrl>
+#include <QByteArray>
 
 const QString QgsAuthBasicMethod::AUTH_METHOD_KEY = QStringLiteral( "Basic" );
 const QString QgsAuthBasicMethod::AUTH_METHOD_DESCRIPTION = QStringLiteral( "Basic authentication" );
 const QString QgsAuthBasicMethod::AUTH_METHOD_DISPLAY_DESCRIPTION = tr( "Basic authentication" );
 
 QMap<QString, QgsAuthMethodConfig> QgsAuthBasicMethod::sAuthConfigCache = QMap<QString, QgsAuthMethodConfig>();
+
+namespace
+{
+  QString encodeUserInfoComponent( const QString &value )
+  {
+    static const QByteArray excludePercent = QByteArrayLiteral( "%" );
+    return QString::fromLatin1( QUrl::toPercentEncoding( value, excludePercent ) );
+  }
+}
 
 
 QgsAuthBasicMethod::QgsAuthBasicMethod()
@@ -228,7 +239,9 @@ bool QgsAuthBasicMethod::updateDataSourceUriItems( QStringList &connectionItems,
                   || uri.startsWith( "ftp://" )
                   || uri.startsWith( "/vsicurl/ftp://" ) )
         {
-          uri = uri.replace( QLatin1String( "://" ), QStringLiteral( "://%1:%2@" ).arg( username, password ) );
+          const QString encodedUsername = encodeUserInfoComponent( username );
+          const QString encodedPassword = encodeUserInfoComponent( password );
+          uri = uri.replace( QLatin1String( "://" ), QStringLiteral( "://%1:%2@" ).arg( encodedUsername, encodedPassword ) );
         }
       }
       // Handle sub-layers

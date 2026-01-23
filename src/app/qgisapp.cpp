@@ -993,6 +993,9 @@ QgisApp::QgisApp( QSplashScreen *splash, AppOptions options, const QString &root
   connect( mUserProfileManager, &QgsUserProfileManager::profilesChanged, this, &QgisApp::refreshProfileMenu );
   endProfile();
 
+  // Initialize QGIS (and the plugins) before the network
+  QgsApplication::initQgis();
+
   // start the network logger early, we want all requests logged!
   startProfile( tr( "Create network logger" ) );
   mNetworkLogger = new QgsNetworkLogger( QgsNetworkAccessManager::instance(), this );
@@ -1038,8 +1041,6 @@ QgisApp::QgisApp( QSplashScreen *splash, AppOptions options, const QString &root
 
   mSplash->showMessage( tr( "Setting up the GUI" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
   qApp->processEvents();
-
-  QgsApplication::initQgis();
 
   // setup connections to auth system
   masterPasswordSetup();
@@ -2636,7 +2637,14 @@ bool QgisApp::event( QEvent *event )
   {
     // handle FileOpen event (double clicking a file icon in Mac OS X Finder)
     QFileOpenEvent *foe = static_cast<QFileOpenEvent *>( event );
-    openFile( foe->file() );
+    if ( !mInitializationHasCompleted )
+    {
+      mDeferredFileOpenPaths << foe->file();
+    }
+    else
+    {
+      openFile( foe->file() );
+    }
     done = true;
   }
   else if ( event->type() == QEvent::Gesture )
@@ -11318,6 +11326,9 @@ void QgisApp::updateLayerModifiedActions()
 
 QList<QgsMapLayer *> QgisApp::editableLayers( bool modified, bool ignoreLayersWhichCannotBeToggled ) const
 {
+  if ( !mLayerTreeView )
+    return {};
+
   QList<QgsMapLayer *> editLayers;
   // use legend layers (instead of registry) so QList mirrors its order
   const auto constFindLayers = mLayerTreeView->layerTreeModel()->rootGroup()->findLayers();
@@ -14736,7 +14747,7 @@ void QgisApp::selectionChanged( const QgsFeatureIds &, const QgsFeatureIds &, bo
             request.setFlags( request.flags() | Qgis::FeatureRequestFlag::NoGeometry );
 
           QgsFeature feat;
-          QgsFeatureIterator featureIt = vlayer->getSelectedFeatures( request );
+          QgsFeatureIterator featureIt = vlayer->getSelectedFeatures( std::move( request ) );
           while ( featureIt.nextFeature( feat ) )
           {
             context.setFeature( feat );
@@ -16829,6 +16840,15 @@ void QgisApp::authMessageLog( const QString &message, const QString &authtag, Qg
 
 void QgisApp::completeInitialization()
 {
+  mInitializationHasCompleted = true;
+
+  const QStringList deferredFileOpenPaths = mDeferredFileOpenPaths;
+  mDeferredFileOpenPaths.clear();
+  for ( const QString &path : deferredFileOpenPaths )
+  {
+    openFile( path );
+  }
+
   emit initializationCompleted();
 }
 

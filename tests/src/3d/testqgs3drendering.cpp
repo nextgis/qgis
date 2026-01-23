@@ -50,7 +50,6 @@
 #include "qgsfillsymbol.h"
 #include "qgsmarkersymbol.h"
 #include "qgsgoochmaterialsettings.h"
-#include "qgs3dsceneexporter.h"
 #include "qgsdirectionallightsettings.h"
 #include "qgsmetalroughmaterialsettings.h"
 #include "qgspointlightsettings.h"
@@ -102,20 +101,16 @@ class TestQgs3DRendering : public QgsTest
     void testAnimationExport();
     void testBillboardRendering();
     void testInstancedRendering();
-    void testInstancedRenderingClipping();
+    void testModelPointRendering();
     void testFilteredFlatTerrain();
     void testFilteredDemTerrain();
     void testFilteredExtrudedPolygons();
     void testDepthBuffer();
     void testAmbientOcclusion();
     void testDebugMap();
-    void test3DSceneExporter();
-    void test3DSceneExporterBig();
 
   private:
     QImage convertDepthImageToGrayscaleImage( const QImage &depthImage );
-
-    void do3DSceneExport( const QString &testName, int zoomLevelsCount, int expectedObjectCount, int expectedFeatureCount, int maxFaceCount, Qgs3DMapScene *scene, QgsVectorLayer *layerPoly, QgsOffscreen3DEngine *engine, QgsTerrainEntity *terrainEntity = nullptr );
 
     std::unique_ptr<QgsProject> mProject;
     QgsRasterLayer *mLayerDtm = nullptr;
@@ -1719,34 +1714,59 @@ void TestQgs3DRendering::testInstancedRendering()
 
   scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 2500, 45, 0 );
 
+  QList<QVector4D> clipPlanesEquations = QList<QVector4D>()
+                                         << QVector4D( 0.866025, -0.5, 0, 660.0 )
+                                         << QVector4D( 0.5, 0.866025, 0, 685.0 )
+                                         << QVector4D( -0.5, -0.866025, 0, 650.0 );
+  scene->enableClipping( clipPlanesEquations );
+
   // When running the test on Travis, it would initially return empty rendered image.
   // Capturing the initial image and throwing it away fixes that. Hopefully we will
   // find a better fix in the future.
   Qgs3DUtils::captureSceneImage( engine, scene );
 
   QImage imgSphere = Qgs3DUtils::captureSceneImage( engine, scene );
+  QGSVERIFYIMAGECHECK( "sphere_rendering_clipping", "sphere_rendering_clipping", imgSphere, QString(), 40, QSize( 0, 0 ), 2 );
+
+  scene->disableClipping();
+
+  Qgs3DUtils::captureSceneImage( engine, scene );
+  imgSphere = Qgs3DUtils::captureSceneImage( engine, scene );
   QGSVERIFYIMAGECHECK( "sphere_rendering", "sphere_rendering", imgSphere, QString(), 40, QSize( 0, 0 ), 2 );
 
+  // ====================== CYLINDER
   QgsPoint3DSymbol *cylinder3DSymbol = new QgsPoint3DSymbol();
   cylinder3DSymbol->setShape( Qgis::Point3DShape::Cylinder );
   QVariantMap vmCylinder;
   vmCylinder[QStringLiteral( "radius" )] = 20.0f;
-  vmCylinder[QStringLiteral( "length" )] = 200.0f;
+  vmCylinder[QStringLiteral( "length" )] = 300.0f;
   cylinder3DSymbol->setShapeProperties( vmCylinder );
   cylinder3DSymbol->setMaterialSettings( materialSettings.clone() );
+
+  // simulate call to set transform as the symbol widget will do
+  QMatrix4x4 id;
+  id.translate( 10.0, 0.0, 10.0 );
+  cylinder3DSymbol->setTransform( id );
 
   layerPointsZ->setRenderer3D( new QgsVectorLayer3DRenderer( cylinder3DSymbol ) );
 
   scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 2500, 60, 0 );
 
+  scene->enableClipping( clipPlanesEquations );
+
   QImage imgCylinder = Qgs3DUtils::captureSceneImage( engine, scene );
+  QGSVERIFYIMAGECHECK( "cylinder_rendering_clipping", "cylinder_rendering_clipping", imgCylinder, QString(), 40, QSize( 0, 0 ), 2 );
+
+  scene->disableClipping();
+
+  Qgs3DUtils::captureSceneImage( engine, scene );
+  imgCylinder = Qgs3DUtils::captureSceneImage( engine, scene );
   delete scene;
   delete mapSettings;
   QGSVERIFYIMAGECHECK( "cylinder_rendering", "cylinder_rendering", imgCylinder, QString(), 40, QSize( 0, 0 ), 2 );
 }
 
-
-void TestQgs3DRendering::testInstancedRenderingClipping()
+void TestQgs3DRendering::testModelPointRendering()
 {
   const QgsRectangle fullExtent( 1000, 1000, 2000, 2000 );
 
@@ -1768,16 +1788,19 @@ void TestQgs3DRendering::testInstancedRenderingClipping()
   featureList << f1 << f2 << f3;
   layerPointsZ->dataProvider()->addFeatures( featureList );
 
-  QgsPoint3DSymbol *sphere3DSymbol = new QgsPoint3DSymbol();
-  sphere3DSymbol->setShape( Qgis::Point3DShape::Sphere );
-  QVariantMap vmSphere;
-  vmSphere[QStringLiteral( "radius" )] = 80.0f;
-  sphere3DSymbol->setShapeProperties( vmSphere );
+  QgsPoint3DSymbol *symbol = new QgsPoint3DSymbol();
+  symbol->setShape( Qgis::Point3DShape::Model );
+  QVariantMap vMap;
+  vMap[QStringLiteral( "model" )] = testDataPath( "/mesh/tree.obj" );
+  symbol->setShapeProperties( vMap );
   QgsPhongMaterialSettings materialSettings;
-  materialSettings.setAmbient( Qt::gray );
-  sphere3DSymbol->setMaterialSettings( materialSettings.clone() );
+  materialSettings.setAmbient( Qt::green );
+  symbol->setMaterialSettings( materialSettings.clone() );
+  QMatrix4x4 id;
+  id.scale( 100.0f );
+  symbol->setTransform( id );
 
-  layerPointsZ->setRenderer3D( new QgsVectorLayer3DRenderer( sphere3DSymbol ) );
+  layerPointsZ->setRenderer3D( new QgsVectorLayer3DRenderer( symbol ) );
 
   Qgs3DMapSettings *mapSettings = new Qgs3DMapSettings;
   mapSettings->setCrs( mProject->crs() );
@@ -1792,58 +1815,27 @@ void TestQgs3DRendering::testInstancedRenderingClipping()
   Qgs3DMapScene *scene = new Qgs3DMapScene( *mapSettings, &engine );
   engine.setRootEntity( scene );
 
-  scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 2500, 45, 0 );
+  scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 2500, 60, 0 );
 
-  QList<QVector4D> clipPlanesEquationsSphere = QList<QVector4D>()
-                                               << QVector4D( 0.866025, -0.5, 0, 660.0 )
-                                               << QVector4D( 0.5, 0.866025, 0, 685.0 )
-                                               << QVector4D( -0.5, -0.866025, 0, 650.0 );
-  scene->enableClipping( clipPlanesEquationsSphere );
+  QList<QVector4D> clipPlanesEquations = QList<QVector4D>()
+                                         << QVector4D( 0.866025, -0.5, 0, 660.0 )
+                                         << QVector4D( 0.5, 0.866025, 0, 685.0 )
+                                         << QVector4D( -0.5, -0.866025, 0, 650.0 );
+  scene->enableClipping( clipPlanesEquations );
 
   // When running the test on Travis, it would initially return empty rendered image.
   // Capturing the initial image and throwing it away fixes that. Hopefully we will
   // find a better fix in the future.
   Qgs3DUtils::captureSceneImage( engine, scene );
 
-  QImage imgSphere = Qgs3DUtils::captureSceneImage( engine, scene );
-  QGSVERIFYIMAGECHECK( "sphere_rendering_clipping", "sphere_rendering_clipping", imgSphere, QString(), 40, QSize( 0, 0 ), 2 );
+  QImage imgModel = Qgs3DUtils::captureSceneImage( engine, scene );
+  QGSVERIFYIMAGECHECK( "model_rendering_clipping", "model_rendering_clipping", imgModel, QString(), 80, QSize( 0, 0 ), 2 );
 
   scene->disableClipping();
 
   Qgs3DUtils::captureSceneImage( engine, scene );
-  imgSphere = Qgs3DUtils::captureSceneImage( engine, scene );
-  QGSVERIFYIMAGECHECK( "sphere_rendering", "sphere_rendering", imgSphere, QString(), 40, QSize( 0, 0 ), 2 );
-
-  QgsPoint3DSymbol *cylinder3DSymbol = new QgsPoint3DSymbol();
-  cylinder3DSymbol->setShape( Qgis::Point3DShape::Cylinder );
-  QVariantMap vmCylinder;
-  vmCylinder[QStringLiteral( "radius" )] = 20.0f;
-  vmCylinder[QStringLiteral( "length" )] = 200.0f;
-  cylinder3DSymbol->setShapeProperties( vmCylinder );
-  cylinder3DSymbol->setMaterialSettings( materialSettings.clone() );
-
-  layerPointsZ->setRenderer3D( new QgsVectorLayer3DRenderer( cylinder3DSymbol ) );
-
-  scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 2500, 60, 0 );
-
-  QList<QVector4D> clipPlanesEquationsCylinder = QList<QVector4D>()
-                                                 << QVector4D( 0.866025, -0.5, 0, 678.0 )
-                                                 << QVector4D( 0.5, 0.866025, 0, 685.0 )
-                                                 << QVector4D( -0.5, -0.866025, 0, 680.0 );
-  scene->enableClipping( clipPlanesEquationsSphere );
-
-  scene->enableClipping( clipPlanesEquationsCylinder );
-
-  QImage imgCylinder = Qgs3DUtils::captureSceneImage( engine, scene );
-  QGSVERIFYIMAGECHECK( "cylinder_rendering_clipping", "cylinder_rendering_clipping", imgCylinder, QString(), 40, QSize( 0, 0 ), 2 );
-
-  scene->disableClipping();
-
-  Qgs3DUtils::captureSceneImage( engine, scene );
-  imgCylinder = Qgs3DUtils::captureSceneImage( engine, scene );
-  delete scene;
-  delete mapSettings;
-  QGSVERIFYIMAGECHECK( "cylinder_rendering", "cylinder_rendering", imgCylinder, QString(), 40, QSize( 0, 0 ), 2 );
+  imgModel = Qgs3DUtils::captureSceneImage( engine, scene );
+  QGSVERIFYIMAGECHECK( "model_rendering", "model_rendering", imgModel, QString(), 80, QSize( 0, 0 ), 2 );
 }
 
 void TestQgs3DRendering::testBillboardRendering()
@@ -2387,191 +2379,6 @@ void TestQgs3DRendering::testDebugMap()
   img = Qgs3DUtils::captureSceneImage( engine, scene );
   QGSVERIFYIMAGECHECK( "debug_map_2", "debug_map_2", img, QString(), 100, QSize( 0, 0 ), 15 );
 #endif
-
-  delete scene;
-  mapSettings.setLayers( {} );
-}
-
-void TestQgs3DRendering::do3DSceneExport( const QString &testName, int zoomLevelsCount, int expectedObjectCount, int expectedFeatureCount, int maxFaceCount, Qgs3DMapScene *scene, QgsVectorLayer *layerPoly, QgsOffscreen3DEngine *engine, QgsTerrainEntity *terrainEntity )
-{
-  // 3d renderer must be replaced to have the tiling updated
-  QgsVectorLayer3DRenderer *renderer3d = dynamic_cast<QgsVectorLayer3DRenderer *>( layerPoly->renderer3D() );
-  QgsVectorLayer3DRenderer *newRenderer3d = new QgsVectorLayer3DRenderer( renderer3d->symbol()->clone() );
-  QgsVectorLayer3DTilingSettings tilingSettings;
-  tilingSettings.setZoomLevelsCount( zoomLevelsCount );
-  tilingSettings.setShowBoundingBoxes( true );
-  newRenderer3d->setTilingSettings( tilingSettings );
-  layerPoly->setRenderer3D( newRenderer3d );
-
-  Qgs3DUtils::captureSceneImage( *engine, scene );
-
-  Qgs3DSceneExporter exporter;
-  exporter.setTerrainResolution( 128 );
-  exporter.setSmoothEdges( false );
-  exporter.setExportNormals( true );
-  exporter.setExportTextures( false );
-  exporter.setTerrainTextureResolution( 512 );
-  exporter.setScale( 1.0 );
-
-  QVERIFY( exporter.parseVectorLayerEntity( scene->layerEntity( layerPoly ), layerPoly ) );
-  if ( terrainEntity )
-    exporter.parseTerrain( terrainEntity, "DEM_Tile" );
-
-  QString objFileName = QString( "%1-%2" ).arg( testName ).arg( zoomLevelsCount );
-  const bool saved = exporter.save( objFileName, QDir::tempPath(), 3 );
-  QVERIFY( saved );
-
-  int sum = 0;
-  for ( auto o : qAsConst( exporter.mObjects ) )
-  {
-    if ( !terrainEntity ) // not comptabible with terrain entity
-      QVERIFY( o->indexes().size() * 3 <= o->vertexPosition().size() );
-    sum += o->indexes().size();
-  }
-
-  QCOMPARE( sum, maxFaceCount );
-  QCOMPARE( exporter.mExportedFeatureIds.size(), expectedFeatureCount );
-  QCOMPARE( exporter.mObjects.size(), expectedObjectCount );
-
-  QFile file( QString( "%1/%2.obj" ).arg( QDir::tempPath(), objFileName ) );
-  file.open( QIODevice::ReadOnly | QIODevice::Text );
-  QTextStream fileStream( &file );
-
-  if ( !terrainEntity ) // dump with terrain are too big to stay in GIT
-    QGSCOMPARELONGSTR( testName.toStdString().c_str(), QString( "%1.obj" ).arg( objFileName ), fileStream.readAll().toUtf8() );
-}
-
-void TestQgs3DRendering::test3DSceneExporter()
-{
-  // =============================================
-  // =========== creating Qgs3DMapSettings
-  QgsVectorLayer *layerPoly = new QgsVectorLayer( testDataPath( "/3d/polygons.gpkg.gz" ), "polygons", "ogr" );
-  QVERIFY( layerPoly->isValid() );
-
-  const QgsRectangle fullExtent = layerPoly->extent();
-
-  // =========== create polygon 3D renderer
-  QgsPolygon3DSymbol *symbol3d = new QgsPolygon3DSymbol();
-  symbol3d->setExtrusionHeight( 10.f );
-  QgsPhongMaterialSettings materialSettings;
-  materialSettings.setAmbient( Qt::lightGray );
-  symbol3d->setMaterialSettings( materialSettings.clone() );
-
-  QgsVectorLayer3DRenderer *renderer3d = new QgsVectorLayer3DRenderer( symbol3d );
-  layerPoly->setRenderer3D( renderer3d );
-
-  QgsProject project;
-  project.setCrs( QgsCoordinateReferenceSystem::fromEpsgId( 3857 ) );
-  project.addMapLayer( layerPoly );
-
-  // =========== create scene 3D settings
-  Qgs3DMapSettings mapSettings;
-  mapSettings.setCrs( project.crs() );
-  mapSettings.setExtent( fullExtent );
-  mapSettings.setLayers( { layerPoly } );
-
-  mapSettings.setTransformContext( project.transformContext() );
-  mapSettings.setPathResolver( project.pathResolver() );
-  mapSettings.setMapThemeCollection( project.mapThemeCollection() );
-  mapSettings.setOutputDpi( 92 );
-
-  // =========== creating Qgs3DMapScene
-  QPoint winSize = QPoint( 640, 480 ); // default window size
-
-  QgsOffscreen3DEngine engine;
-  engine.setSize( QSize( winSize.x(), winSize.y() ) );
-  Qgs3DMapScene *scene = new Qgs3DMapScene( mapSettings, &engine );
-
-  scene->cameraController()->setLookingAtPoint( QgsVector3D( 0, 0, 0 ), 7000, 20.0, -10.0 );
-  engine.setRootEntity( scene );
-
-  const int nbFaces = 165;
-  const int nbFeat = 3;
-
-  // =========== check with 1 big tile ==> 1 exported object
-  do3DSceneExport( "scene_export", 1, 1, nbFeat, nbFaces, scene, layerPoly, &engine );
-  // =========== check with 4 tiles ==> 1 exported objects
-  do3DSceneExport( "scene_export", 2, 1, nbFeat, nbFaces, scene, layerPoly, &engine );
-  // =========== check with 9 tiles ==> 3 exported objects
-  do3DSceneExport( "scene_export", 3, 3, nbFeat, nbFaces, scene, layerPoly, &engine );
-  // =========== check with 16 tiles ==> 3 exported objects
-  do3DSceneExport( "scene_export", 4, 3, nbFeat, nbFaces, scene, layerPoly, &engine );
-  // =========== check with 25 tiles ==> 3 exported objects
-  do3DSceneExport( "scene_export", 5, 3, nbFeat, nbFaces, scene, layerPoly, &engine );
-
-  delete scene;
-  mapSettings.setLayers( {} );
-}
-
-void TestQgs3DRendering::test3DSceneExporterBig()
-{
-  // In Qt 6, this test does not work on CI
-  // because somewhere after 10K lines, one of the values is -0.304 instead of -0.305
-#if QT_VERSION >= QT_VERSION_CHECK( 6, 0, 0 )
-  if ( QgsTest::isCIRun() )
-  {
-    QSKIP( "fails on CI" );
-  }
-#endif
-
-  // =============================================
-  // =========== creating Qgs3DMapSettings
-  QgsRasterLayer *layerDtm = new QgsRasterLayer( testDataPath( "/3d/dtm.tif" ), "dtm", "gdal" );
-  QVERIFY( layerDtm->isValid() );
-
-  const QgsRectangle fullExtent = layerDtm->extent();
-
-  QgsProject project;
-  project.setCrs( layerDtm->crs() );
-  project.addMapLayer( layerDtm );
-
-  Qgs3DMapSettings mapSettings;
-  mapSettings.setCrs( project.crs() );
-  mapSettings.setExtent( fullExtent );
-  mapSettings.setLayers( { layerDtm, mLayerBuildings } );
-
-  mapSettings.setTransformContext( project.transformContext() );
-  mapSettings.setPathResolver( project.pathResolver() );
-  mapSettings.setMapThemeCollection( project.mapThemeCollection() );
-
-  QgsDemTerrainSettings *demTerrainSettings = new QgsDemTerrainSettings;
-  demTerrainSettings->setLayer( layerDtm );
-  demTerrainSettings->setVerticalScale( 3 );
-  mapSettings.setTerrainSettings( demTerrainSettings );
-
-  QgsPointLightSettings defaultPointLight;
-  defaultPointLight.setPosition( QgsVector3D( 0, 400, 0 ) );
-  defaultPointLight.setConstantAttenuation( 0 );
-  mapSettings.setLightSources( { defaultPointLight.clone() } );
-  mapSettings.setOutputDpi( 92 );
-
-  // =========== creating Qgs3DMapScene
-  QPoint winSize = QPoint( 640, 480 ); // default window size
-
-  QgsOffscreen3DEngine engine;
-  engine.setSize( QSize( winSize.x(), winSize.y() ) );
-  Qgs3DMapScene *scene = new Qgs3DMapScene( mapSettings, &engine );
-  engine.setRootEntity( scene );
-
-  // =========== set camera position
-  scene->cameraController()->setLookingAtPoint( QVector3D( 0, 0, 0 ), 1500, 40.0, -10.0 );
-
-  const int nbFaces = 19869;
-  const int nbFeat = 401;
-
-  // =========== check with 1 big tile ==> 1 exported object
-  do3DSceneExport( "big_scene_export", 1, 1, nbFeat, nbFaces, scene, mLayerBuildings, &engine );
-  // =========== check with 4 tiles ==> 4 exported objects
-  do3DSceneExport( "big_scene_export", 2, 4, nbFeat, nbFaces, scene, mLayerBuildings, &engine );
-  // =========== check with 9 tiles ==> 14 exported objects
-  do3DSceneExport( "big_scene_export", 3, 14, nbFeat, nbFaces, scene, mLayerBuildings, &engine );
-  // =========== check with 16 tiles ==> 32 exported objects
-  do3DSceneExport( "big_scene_export", 4, 32, nbFeat, nbFaces, scene, mLayerBuildings, &engine );
-  // =========== check with 25 tiles ==> 70 exported objects
-  do3DSceneExport( "big_scene_export", 5, 70, nbFeat, nbFaces, scene, mLayerBuildings, &engine );
-
-  // =========== check with 25 tiles + terrain ==> 70+1 exported objects
-  do3DSceneExport( "terrain_scene_export", 5, 71, nbFeat, 119715, scene, mLayerBuildings, &engine, scene->terrainEntity() );
 
   delete scene;
   mapSettings.setLayers( {} );

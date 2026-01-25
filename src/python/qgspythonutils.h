@@ -234,6 +234,11 @@ class PYTHON_EXPORT QgsPythonUtils
      * \since QGIS 3.38
      */
     virtual void initGDAL() = 0;
+
+    /**
+     * Returns the current path for extra Python plugins
+     */
+    virtual QString nextgisExtraPluginsPath() const = 0;
 };
 
 #endif

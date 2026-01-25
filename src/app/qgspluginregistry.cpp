@@ -574,6 +574,14 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString &pluginDirString )
     corePlugins << "nextgis_connect";
     corePlugins << "ngq_rosreestr_tools";
 
+    // NextGIS extra plugins
+    const QDir extraPluginsDir( mPythonUtils->nextgisExtraPluginsPath() );
+    const QStringList extraPluginsList = extraPluginsDir.entryList( QDir::Dirs | QDir::NoDotAndDotDot );
+    for ( const QString &extraPlugin : extraPluginsList )
+    {
+      corePlugins << extraPlugin;
+    }
+
     QStringList disabledCorePlugins = QStringList();
     disabledCorePlugins << QStringLiteral( "db_manager" );
     disabledCorePlugins << QStringLiteral( "MetaSearch" );

@@ -71,6 +71,11 @@ class QgsPythonUtilsImpl : public QgsPythonUtils
     QString pluginsPath() const;
 
     /**
+     * Returns the current path for extra Python plugins
+     */
+    QString nextgisExtraPluginsPath() const override;
+
+    /**
      * Returns the current path for Python in home directory.
      */
     QString homePythonPath() const;

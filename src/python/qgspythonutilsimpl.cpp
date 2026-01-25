@@ -153,6 +153,7 @@ _ssr = StartupScriptRunner()
   }
   pluginpaths << homePluginsPath();
   pluginpaths << '"' + pluginsPath() + '"';
+  pluginpaths << '"' + nextgisExtraPluginsPath() + '"';
 
   // expect that bindings are installed locally, so add the path to modules
   // also add path to plugins
@@ -840,6 +841,11 @@ QString QgsPythonUtilsImpl::pythonPath() const
 QString QgsPythonUtilsImpl::pluginsPath() const
 {
   return pythonPath() + u"/plugins"_s;
+}
+
+QString QgsPythonUtilsImpl::nextgisExtraPluginsPath() const
+{
+  return pythonPath() + QStringLiteral( "/extra/plugins" );
 }
 
 QString QgsPythonUtilsImpl::homePythonPath() const

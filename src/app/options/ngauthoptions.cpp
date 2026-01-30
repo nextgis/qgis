@@ -189,7 +189,6 @@ void NGAuthOptions::on_signinButton_clicked()
       NGAccess::instance().setUseCodeChallenge( true );
     }
     NGAccess::instance().setEndPoint( endpointEdit->text(), type );
-    NGAccess::instance().checkEndpointAsync( endpointEdit->text() );
 #endif // NGLIB_VERSION_NUMBER > 1100
     NGAccess::instance().authorize();
   }

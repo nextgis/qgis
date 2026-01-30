@@ -1973,7 +1973,6 @@ void QgsOptions::saveOptions()
     NGAccess::instance().setUseCodeChallenge( true );
   }
   NGAccess::instance().setEndPoint( mOptionsPageNextGIS->endpointEdit->text(), type );
-  NGAccess::instance().checkEndpointAsync( mOptionsPageNextGIS->endpointEdit->text() );
 #endif // HAVE_NGSTD
 
   //save variables

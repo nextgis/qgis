@@ -58,6 +58,14 @@ class QgsLayerTreeViewIndicatorProvider : public QObject
     virtual void disconnectSignals( QgsMapLayer *layer );
 
     /**
+     * Returns whether indicators created by this provider support click interaction.
+     * When true, the cursor changes to a pointing hand on hover.
+     * Default implementation returns false. Override and return true in providers
+     * that implement onIndicatorClicked().
+     */
+    virtual bool isIndicatorClickable() const { return false; }
+
+    /**
      * Updates the state of a the indicator for the given \a layer.
      */
     void updateLayerIndicator( QgsMapLayer *layer );

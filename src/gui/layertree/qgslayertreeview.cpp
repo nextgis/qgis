@@ -476,6 +476,7 @@ QgsLayerTreeView::QgsLayerTreeView( QWidget *parent )
   // we need a custom item delegate in order to draw indicators
   setItemDelegate( new QgsLayerTreeViewItemDelegate( this ) );
   setStyle( new QgsLayerTreeViewProxyStyle( this ) );
+  viewport()->setMouseTracking( true );
 
   setLayerMarkWidth( static_cast<int>( QFontMetricsF( font() ).horizontalAdvance( 'l' ) * Qgis::UI_SCALE_FACTOR ) );
 
@@ -783,6 +784,51 @@ bool QgsLayerTreeView::showPrivateLayers() const
 bool QgsLayerTreeView::hideValidLayers() const
 {
   return mHideValidLayers;
+}
+
+bool QgsLayerTreeView::isOverClickableIndicator( const QModelIndex &index, const QPoint &pos ) const
+{
+  if ( !index.isValid() )
+    return false;
+
+  QgsLayerTreeNode *node = index2node( index );
+  if ( !node )
+    return false;
+
+  const QList<QgsLayerTreeViewIndicator *> indicators = this->indicators( node );
+  if ( indicators.isEmpty() )
+    return false;
+
+  QStyleOptionViewItem opt;
+  initViewItemOption( &opt );
+  opt.index = index;
+  opt.rect = visualRect( index );
+
+  const QRect indRect = style()->subElementRect(
+    static_cast<QStyle::SubElement>( QgsLayerTreeViewProxyStyle::SE_LayerTreeItemIndicator ),
+    &opt, this );
+
+  if ( !indRect.contains( pos ) )
+    return false;
+
+  const int indicatorIndex = ( pos.x() - indRect.left() ) / indRect.height();
+  return indicatorIndex >= 0 && indicatorIndex < indicators.count() && indicators[indicatorIndex] && indicators[indicatorIndex]->isClickable();
+}
+
+void QgsLayerTreeView::mouseMoveEvent( QMouseEvent *event )
+{
+  const QModelIndex index = indexAt( event->pos() );
+
+  if ( isOverClickableIndicator( index, event->pos() ) )
+  {
+    viewport()->setCursor( Qt::CursorShape::PointingHandCursor );
+  }
+  else
+  {
+    viewport()->unsetCursor();
+  }
+
+  QTreeView::mouseMoveEvent( event );
 }
 
 void QgsLayerTreeView::mouseReleaseEvent( QMouseEvent *event )

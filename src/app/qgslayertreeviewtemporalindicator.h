@@ -29,6 +29,7 @@ class QgsLayerTreeViewTemporalIndicatorProvider : public QgsLayerTreeViewIndicat
     explicit QgsLayerTreeViewTemporalIndicatorProvider( QgsLayerTreeView *view );
 
   protected:
+    bool isIndicatorClickable() const override { return true; }
     void connectSignals( QgsMapLayer *layer ) override;
 
   protected slots:

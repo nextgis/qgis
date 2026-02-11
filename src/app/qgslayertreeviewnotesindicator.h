@@ -30,6 +30,7 @@ class QgsLayerTreeViewNotesIndicatorProvider : public QgsLayerTreeViewIndicatorP
     void onIndicatorClicked( const QModelIndex &index ) override;
 
   protected:
+    bool isIndicatorClickable() const override { return true; }
     void connectSignals( QgsMapLayer *layer ) override;
     void disconnectSignals( QgsMapLayer *layer ) override;
 

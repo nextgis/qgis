@@ -1731,7 +1731,13 @@ bool QgsWmsProvider::setupXyzCapabilities( const QString &uri, const QgsRectangl
   QgsDataSourceUri parsedUri;
   parsedUri.setEncodedUri( uri );
 
-  QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( u"EPSG:4326"_s ), QgsCoordinateReferenceSystem( mSettings.mCrsId ), transformContext() );
+  // XYZ tiles use the standard Web Mercator (EPSG:3857) tile grid scheme.
+  // When a custom CRS is specified via "crs" parameter, the tile grid coordinates
+  // are still calculated using EPSG:3857 parameters (bbox extent),
+  // but the CRS is set to the custom value. This allows XYZ tile services that use
+  // the same z/x/y numbering scheme but different projections (e.g., EPSG:3395)
+  // to work correctly by treating tile coordinates as being in that CRS.
+  QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( u"EPSG:4326"_s ), QgsCoordinateReferenceSystem( u"EPSG:3857"_s ), transformContext() );
 
   // the whole world is projected to a square:
   // X going from 180 W to 180 E

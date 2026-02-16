@@ -305,10 +305,29 @@ QNetworkReply *QgsNetworkAccessManager::createRequest( QNetworkAccessManager::Op
 
   QNetworkRequest *pReq( const_cast< QNetworkRequest * >( &req ) ); // hack user agent
 
-  QString userAgent = s.value( u"/qgis/networkAndProxy/userAgent"_s, "Mozilla/5.0" ).toString();
-  if ( !userAgent.isEmpty() )
-    userAgent += ' ';
-  userAgent += u"QGIS/%1/%2"_s.arg( Qgis::versionInt() ).arg( QSysInfo::prettyProductName() );
+  constexpr auto attrOverride = static_cast< QNetworkRequest::Attribute >( QgsNetworkRequestParameters::AttributeUserAgentOverride );
+  const QVariant userAgentOverride = pReq->attribute( attrOverride );
+
+  QString userAgent;
+  if ( userAgentOverride.isValid() && !userAgentOverride.toString().isEmpty() )
+  {
+    userAgent = userAgentOverride.toString();
+  }
+  else
+  {
+    constexpr auto attrSuffix = static_cast< QNetworkRequest::Attribute >( QgsNetworkRequestParameters::AttributeUserAgentSuffix );
+    const QVariant userAgentCustomSuffix = pReq->attribute( attrSuffix );
+
+    userAgent = s.value( u"/qgis/networkAndProxy/userAgent"_s, "Mozilla/5.0" ).toString();
+    if ( !userAgent.isEmpty() )
+      userAgent += ' ';
+    userAgent += u"QGIS/%1/%2"_s.arg( Qgis::versionInt() ).arg( QSysInfo::prettyProductName() );
+
+    if ( userAgentCustomSuffix.isValid() && !userAgentCustomSuffix.toString().isEmpty() )
+    {
+      userAgent.append( ' ' + userAgentCustomSuffix.toString() );
+    }
+  }
   pReq->setRawHeader( "User-Agent", userAgent.toLatin1() );
 
 #ifndef QT_NO_SSL

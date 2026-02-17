@@ -45,6 +45,9 @@ class QgsLayerTreeViewBadLayerIndicatorProvider : public QgsLayerTreeViewIndicat
      */
     void requestChangeDataSource( QgsMapLayer *maplayer );
 
+  protected:
+    bool isIndicatorClickable() const override { return true; }
+
   protected slots:
     void onIndicatorClicked( const QModelIndex &index ) override;
 

@@ -54,6 +54,18 @@ indicator
 Sets tool tip text
 %End
 
+    bool isClickable() const;
+%Docstring
+Returns whether the indicator supports user click interaction. When
+true, the cursor changes to a pointing hand on hover.
+%End
+
+    void setClickable( bool clickable );
+%Docstring
+Sets whether the indicator supports user click interaction. When true,
+the cursor changes to a pointing hand on hover.
+%End
+
   signals:
     void clicked( const QModelIndex &index );
 %Docstring

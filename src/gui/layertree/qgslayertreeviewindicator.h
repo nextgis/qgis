@@ -54,6 +54,18 @@ class GUI_EXPORT QgsLayerTreeViewIndicator : public QObject
     //! Sets tool tip text
     void setToolTip( const QString &tip ) { mToolTip = tip; }
 
+    /**
+     * Returns whether the indicator supports user click interaction.
+     * When true, the cursor changes to a pointing hand on hover.
+     */
+    bool isClickable() const { return mClickable; }
+
+    /**
+     * Sets whether the indicator supports user click interaction.
+     * When true, the cursor changes to a pointing hand on hover.
+     */
+    void setClickable( bool clickable ) { mClickable = clickable; }
+
   signals:
     //! Emitted when user clicks on the indicator
     void clicked( const QModelIndex &index );
@@ -67,6 +79,7 @@ class GUI_EXPORT QgsLayerTreeViewIndicator : public QObject
   private:
     QIcon mIcon;
     QString mToolTip;
+    bool mClickable = false;
 };
 
 #endif // QGSLAYERTREEVIEWINDICATOR_H

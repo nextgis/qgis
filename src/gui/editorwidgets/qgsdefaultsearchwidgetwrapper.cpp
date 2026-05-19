@@ -75,7 +75,7 @@ void QgsDefaultSearchWidgetWrapper::setExpression( const QString &expression )
       const double doubleValue = QgsDoubleValidator::toDouble( exp, &ok );
       if ( ok )
       {
-        exp = QString::number( doubleValue );
+        exp = QString::number( doubleValue, 'f', QLocale::FloatingPointShortest );
       }
     }
     str = QStringLiteral( "%1 %2 '%3'" )
@@ -168,10 +168,10 @@ QString QgsDefaultSearchWidgetWrapper::createExpression( QgsSearchWidgetWrapper:
   {
     bool ok = false;
     const double doubleValue = QgsDoubleValidator::toDouble( text, &ok );
+
     if ( ok )
     {
-      text = QString::number( doubleValue );
-      ;
+      text = QString::number( doubleValue, 'f', QLocale::FloatingPointShortest );
     }
   }
 

@@ -568,8 +568,8 @@ std::size_t FeaturePart::createCandidatesAtOrderedPositionsOverPoint( double x, 
     if ( mLF->feature().geometry().constParts().hasNext() )
     {
       const QgsGeometry geom{ QgsGeos::fromGeos( mLF->geometry() ) };
-      symbolWidthOffset = ( mLF->symbolSize().width() - geom.boundingBox().width() ) / 2.0;
-      symbolHeightOffset = ( mLF->symbolSize().height() - geom.boundingBox().height() ) / 2.0;
+      symbolWidthOffset = std::max( ( mLF->symbolSize().width() - geom.boundingBox().width() ) / 2.0, 0.0 );
+      symbolHeightOffset = std::max( ( mLF->symbolSize().height() - geom.boundingBox().height() ) / 2.0, 0.0 );
     }
     else
     {
@@ -1599,7 +1599,7 @@ std::size_t FeaturePart::createCurvedCandidatesAlongLine( std::vector< std::uniq
       continue;
 
     double lineAnchorPoint = 0;
-    if ( originalPoint && offset != NoOffset )
+    if ( originalPoint )
     {
       // the actual anchor point for the offset curves is the closest point on those offset curves
       // to the anchor point on the original line. This avoids anchor points which differ greatly

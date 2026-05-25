@@ -265,7 +265,7 @@ void QgsAbout::btnQgisUser_clicked()
 
 void QgsAbout::btnQgisHome_clicked()
 {
-  openUrl( nextgisDomain() + u"/nextgis-qgis"_s );
+  openUrl( QUrl( nextgisDomain() + u"/nextgis-qgis"_s ) );
 }
 
 void QgsAbout::openUrl( const QUrl &url )

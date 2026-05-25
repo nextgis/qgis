@@ -3562,6 +3562,7 @@ void QgisApp::createToolBars()
   // qmainwindow::saveState and qmainwindow::restoreState
   // work properly
 
+  QList<QToolBar *> toolbarMenuToolBars;
   toolbarMenuToolBars
     << mFileToolBar
     << mDataSourceManagerToolBar
@@ -12998,35 +12999,35 @@ void QgisApp::pyQgisApiDocumentation()
 void QgisApp::reportaBug()
 {
   QgsSettings settings;
-  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, nextgisDomain() + u"/support"_s ).toString();
+  QString reportaBugUrl = settings.value( u"qgis/reportaBugUrl"_s, QString( nextgisDomain() + u"/support"_s ) ).toString();
   openURL( reportaBugUrl, false );
 }
 
 void QgisApp::getInvolved()
 {
   QgsSettings settings;
-  QString getInvolvedUrl = settings.value( u"qgis/getInvolved"_s, nextgisDomain() + u"/redirect/ru/ak45prp5"_s ).toString();
+  QString getInvolvedUrl = settings.value( u"qgis/getInvolved"_s, QString( nextgisDomain() + u"/redirect/ru/ak45prp5"_s ) ).toString();
   openURL( getInvolvedUrl, false );
 }
 
 void QgisApp::donate()
 {
   QgsSettings settings;
-  QString donateUrl = settings.value( u"qgis/donate"_s, nextgisDomain() + u"/redirect/ru/ak45prp5"_s ).toString();
+  QString donateUrl = settings.value( u"qgis/donate"_s, QString( nextgisDomain() + u"/redirect/ru/ak45prp5"_s ) ).toString();
   openURL( donateUrl, false );
 }
 
 void QgisApp::supportProviders()
 {
   QgsSettings settings;
-  QString supportProvidersUrl = settings.value( u"qgis/supportProvidersUrl"_s, nextgisDomain() + u"/support"_s ).toString();
+  QString supportProvidersUrl = settings.value( u"qgis/supportProvidersUrl"_s, QString( nextgisDomain() + u"/support"_s ) ).toString();
   openURL( supportProvidersUrl, false );
 }
 
 void QgisApp::helpQgisHomePage()
 {
   QgsSettings settings;
-  QString helpQgisHomePageUrl = settings.value( u"qgis/helpQgisHomePageUrl"_s, nextgisDomain() + u"/nextgis-qgis"_s ).toString();
+  QString helpQgisHomePageUrl = settings.value( u"qgis/helpQgisHomePageUrl"_s, QString( nextgisDomain() + u"/nextgis-qgis"_s ) ).toString();
   openURL( helpQgisHomePageUrl, false );
 }
 

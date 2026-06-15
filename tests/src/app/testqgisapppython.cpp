@@ -21,6 +21,7 @@
 
 #include <qgisapp.h>
 #include <qgsapplication.h>
+#include "qgspluginregistry.h"
 #include "qgspythonutils.h"
 
 /**
@@ -44,6 +45,7 @@ class TestQgisAppPython : public QObject
     void plugins();
     void pythonPlugin();
     void pluginMetadata();
+    void pythonPluginCompatible();
     void pythonPluginDependencyOrder();
     void runString();
     void evalString();
@@ -114,6 +116,8 @@ void TestQgisAppPython::pluginMetadata()
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "invalid" ) ), QStringLiteral( "__error__" ) );
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "name" ) ), QStringLiteral( "plugin path test" ) );
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "qgisMinimumVersion" ) ), QStringLiteral( "2.0" ) );
+  QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "pythonMinimumVersion" ) ), QStringLiteral( "3.0" ) );
+  QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "pythonMaximumVersion" ) ), QStringLiteral( "3.99" ) );
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "description" ) ), QStringLiteral( "desc" ) );
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "version" ) ), QStringLiteral( "0.1" ) );
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "PluginPathTest" ), QStringLiteral( "author" ) ), QStringLiteral( "HM/Oslandia" ) );
@@ -128,6 +132,17 @@ void TestQgisAppPython::pluginMetadata()
   // hasProcessingProvider also accepts true/True
   QCOMPARE( mQgisApp->mPythonUtils->getPluginMetadata( QStringLiteral( "ProcessingPluginTest2" ), QStringLiteral( "hasProcessingProvider" ) ), QStringLiteral( "True" ) );
   QVERIFY( mQgisApp->mPythonUtils->pluginHasProcessingProvider( QStringLiteral( "ProcessingPluginTest2" ) ) );
+}
+
+void TestQgisAppPython::pythonPluginCompatible()
+{
+  QVERIFY( mQgisApp->mPythonUtils->pluginList().contains( QStringLiteral( "PluginPathTest" ) ) );
+  QVERIFY( mQgisApp->mPythonUtils->pluginList().contains( QStringLiteral( "PythonMinimumVersionTest" ) ) );
+  QVERIFY( mQgisApp->mPythonUtils->pluginList().contains( QStringLiteral( "PythonMaximumVersionTest" ) ) );
+
+  QVERIFY( QgsPluginRegistry::instance()->isPythonPluginCompatible( QStringLiteral( "PluginPathTest" ) ) );
+  QVERIFY( !QgsPluginRegistry::instance()->isPythonPluginCompatible( QStringLiteral( "PythonMinimumVersionTest" ) ) );
+  QVERIFY( !QgsPluginRegistry::instance()->isPythonPluginCompatible( QStringLiteral( "PythonMaximumVersionTest" ) ) );
 }
 
 void TestQgisAppPython::pythonPluginDependencyOrder()

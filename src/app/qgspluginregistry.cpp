@@ -35,6 +35,7 @@
 #include "qgsmessagebar.h"
 #include "qgsmessagebaritem.h"
 #include "qgsruntimeprofiler.h"
+#include "qgsconfig.h"
 
 #ifdef WITH_BINDINGS
 #include "qgspythonutils.h"
@@ -46,6 +47,76 @@ typedef const QString *name_t();
 typedef const QString *description_t();
 typedef const QString *category_t();
 typedef int type_t();
+
+namespace
+{
+  struct PluginVersion
+  {
+    int major = 0;
+    int minor = 0;
+    int bugfix = 0;
+  };
+
+  bool parsePluginVersion( const QString &version, PluginVersion &parsedVersion )
+  {
+    const QStringList versionParts = version.split( '.' );
+    if ( versionParts.count() != 2 && versionParts.count() != 3 )
+      return false;
+
+    bool ok = false;
+    parsedVersion.major = versionParts.at( 0 ).toInt( &ok );
+    if ( !ok )
+      return false;
+
+    parsedVersion.minor = versionParts.at( 1 ).toInt( &ok );
+    if ( !ok )
+      return false;
+
+    parsedVersion.bugfix = 0;
+    if ( versionParts.count() == 3 )
+    {
+      parsedVersion.bugfix = versionParts.at( 2 ).toInt( &ok );
+      if ( !ok )
+        return false;
+    }
+
+    return true;
+  }
+
+  QString comparablePluginVersion( const PluginVersion &version )
+  {
+    return QStringLiteral( "%1%2%3" ).arg( version.major, 4, 10, QChar( '0' ) ).arg( version.minor, 4, 10, QChar( '0' ) ).arg( version.bugfix, 4, 10, QChar( '0' ) );
+  }
+
+  bool checkPluginVersionRange( const QString &currentVersion, const QString &minVersion, const QString &maxVersion )
+  {
+    PluginVersion minimumVersion;
+    if ( !parsePluginVersion( minVersion, minimumVersion ) )
+      return false;
+
+    PluginVersion maximumVersion;
+    if ( maxVersion.isEmpty() || maxVersion == QLatin1String( "__error__" ) )
+    {
+      maximumVersion.major = minimumVersion.major;
+      maximumVersion.minor = 99;
+      maximumVersion.bugfix = 99;
+    }
+    else if ( !parsePluginVersion( maxVersion, maximumVersion ) )
+    {
+      return false;
+    }
+
+    PluginVersion currentParsedVersion;
+    if ( !parsePluginVersion( currentVersion, currentParsedVersion ) )
+      return false;
+
+    const QString minComparableVersion = comparablePluginVersion( minimumVersion );
+    const QString maxComparableVersion = comparablePluginVersion( maximumVersion );
+    const QString currentComparableVersion = comparablePluginVersion( currentParsedVersion );
+
+    return minComparableVersion <= currentComparableVersion && maxComparableVersion >= currentComparableVersion;
+  }
+}
 
 
 QgsPluginRegistry *QgsPluginRegistry::sInstance = nullptr;
@@ -199,78 +270,27 @@ void QgsPluginRegistry::unloadAll()
 
 bool QgsPluginRegistry::checkQgisVersion( const QString &minVersion, const QString &maxVersion ) const
 {
-  // Parse qgisMinVersion. Must be in form x.y.z or just x.y
-  const QStringList minVersionParts = minVersion.split( '.' );
-  if ( minVersionParts.count() != 2 && minVersionParts.count() != 3 )
-    return false;
-
-  int minVerMajor, minVerMinor, minVerBugfix = 0;
-  bool ok;
-  minVerMajor = minVersionParts.at( 0 ).toInt( &ok );
-  if ( !ok )
-    return false;
-  minVerMinor = minVersionParts.at( 1 ).toInt( &ok );
-  if ( !ok )
-    return false;
-  if ( minVersionParts.count() == 3 )
-  {
-    minVerBugfix = minVersionParts.at( 2 ).toInt( &ok );
-    if ( !ok )
-      return false;
-  }
-
-  // Parse qgisMaxVersion. Must be in form x.y.z or just x.y
-  int maxVerMajor, maxVerMinor, maxVerBugfix = 99;
-  if ( maxVersion.isEmpty() || maxVersion == QLatin1String( "__error__" ) )
-  {
-    maxVerMajor = minVerMajor;
-    maxVerMinor = 99;
-  }
-  else
-  {
-    const QStringList maxVersionParts = maxVersion.split( '.' );
-    if ( maxVersionParts.count() != 2 && maxVersionParts.count() != 3 )
-      return false;
-
-    bool ok;
-    maxVerMajor = maxVersionParts.at( 0 ).toInt( &ok );
-    if ( !ok )
-      return false;
-    maxVerMinor = maxVersionParts.at( 1 ).toInt( &ok );
-    if ( !ok )
-      return false;
-    if ( maxVersionParts.count() == 3 )
-    {
-      maxVerBugfix = maxVersionParts.at( 2 ).toInt( &ok );
-      if ( !ok )
-        return false;
-    }
-  }
-
   // our qgis version - cut release name after version number
-  const QString qgisVersion = Qgis::version().section( '-', 0, 0 );
+  PluginVersion qgisVersion;
+  if ( !parsePluginVersion( Qgis::version().section( '-', 0, 0 ), qgisVersion ) )
+    return false;
 
-  const QStringList qgisVersionParts = qgisVersion.split( '.' );
-
-  int qgisMajor = qgisVersionParts.at( 0 ).toInt();
-  int qgisMinor = qgisVersionParts.at( 1 ).toInt();
-  int qgisBugfix = qgisVersionParts.at( 2 ).toInt();
-
-  if ( qgisMinor == 99 )
+  if ( qgisVersion.minor == 99 )
   {
     // we want the API version, so for x.99 bump it up to the next major release: e.g. 2.99 to 3.0.0
-    qgisMajor++;
-    qgisMinor = 0;
-    qgisBugfix = 0;
+    qgisVersion.major++;
+    qgisVersion.minor = 0;
+    qgisVersion.bugfix = 0;
   };
 
-  // build XxYyZz strings with trailing zeroes if needed
-  const QString minVer = QStringLiteral( "%1%2%3" ).arg( minVerMajor, 2, 10, QChar( '0' ) ).arg( minVerMinor, 2, 10, QChar( '0' ) ).arg( minVerBugfix, 2, 10, QChar( '0' ) );
-  const QString maxVer = QStringLiteral( "%1%2%3" ).arg( maxVerMajor, 2, 10, QChar( '0' ) ).arg( maxVerMinor, 2, 10, QChar( '0' ) ).arg( maxVerBugfix, 2, 10, QChar( '0' ) );
-  const QString curVer = QStringLiteral( "%1%2%3" ).arg( qgisMajor, 2, 10, QChar( '0' ) ).arg( qgisMinor, 2, 10, QChar( '0' ) ).arg( qgisBugfix, 2, 10, QChar( '0' ) );
+  const QString currentQgisVersion = QStringLiteral( "%1.%2.%3" ).arg( qgisVersion.major ).arg( qgisVersion.minor ).arg( qgisVersion.bugfix );
+  return checkPluginVersionRange( currentQgisVersion, minVersion, maxVersion );
+}
 
-  // compare
-  return ( minVer <= curVer && maxVer >= curVer );
+bool QgsPluginRegistry::checkPythonVersion( const QString &minVersion, const QString &maxVersion ) const
+{
+  const QString effectiveMinVersion = minVersion.isEmpty() || minVersion == QLatin1String( "__error__" ) ? QStringLiteral( "0.0" ) : minVersion;
+  return checkPluginVersionRange( QStringLiteral( PYTHON_VERSION ), effectiveMinVersion, maxVersion );
 }
 
 
@@ -759,7 +779,15 @@ bool QgsPluginRegistry::isPythonPluginCompatible( const QString &packageName ) c
   const QString minVersion = mPythonUtils->getPluginMetadata( packageName, QStringLiteral( "qgisMinimumVersion" ) );
   // try to read qgisMaximumVersion. Note checkQgisVersion can cope with "__error__" value.
   const QString maxVersion = mPythonUtils->getPluginMetadata( packageName, QStringLiteral( "qgisMaximumVersion" ) );
-  return minVersion != QLatin1String( "__error__" ) && checkQgisVersion( minVersion, maxVersion );
+  if ( minVersion == QLatin1String( "__error__" ) || !checkQgisVersion( minVersion, maxVersion ) )
+    return false;
+
+  const QString minPythonVersion = mPythonUtils->getPluginMetadata( packageName, QStringLiteral( "pythonMinimumVersion" ) );
+  const QString maxPythonVersion = mPythonUtils->getPluginMetadata( packageName, QStringLiteral( "pythonMaximumVersion" ) );
+  if ( minPythonVersion == QLatin1String( "__error__" ) && ( maxPythonVersion.isEmpty() || maxPythonVersion == QLatin1String( "__error__" ) ) )
+    return true;
+
+  return checkPythonVersion( minPythonVersion, maxPythonVersion );
 #else
   Q_UNUSED( packageName )
   return false;

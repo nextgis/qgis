@@ -49,6 +49,7 @@ ALPHA, BETA, RC, PREVIEW and TRUNK which make the version number lower.
 from qgis.core import Qgis
 
 import re
+import sys
 from packaging.version import Version, InvalidVersion
 
 # ------------------------------------------------------------------------ #
@@ -166,3 +167,8 @@ def pyQgisVersion():
         x = str(int(x) + 1)
         y = z = "0"
     return f"{x}.{y}.{z}"
+
+
+def pyPythonVersion():
+    """Return current Python version number as X.Y.Z for testing plugin compatibility."""
+    return f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"

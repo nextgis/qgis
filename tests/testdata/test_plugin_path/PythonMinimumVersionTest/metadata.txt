@@ -1,0 +1,8 @@
+[general]
+name=python minimum version test
+qgisMinimumVersion=3.0
+qgisMaximumVersion=99.99
+pythonMinimumVersion=99.0
+description=desc
+version=0.1
+author=QGIS

@@ -52,6 +52,7 @@ from qgis.gui import QgsGui
 from qgis.utils import iface, plugin_paths, HOME_PLUGIN_PATH
 from .version_compare import (
     pyQgisVersion,
+    pyPythonVersion,
     compareVersions,
     normalizeVersion,
     isCompatible,
@@ -130,6 +131,14 @@ nextGISRepo = (
 
 
 # --- common functions ------------------------------------------------------------------- #
+def normalizePluginMinimumVersion(version: str) -> str:
+    return version if version else "0.0"
+
+
+def normalizePluginMaximumVersion(minimum_version: str, maximum_version: str) -> str:
+    return maximum_version if maximum_version else minimum_version.split(".")[0] + ".99"
+
+
 def removeDir(path):
     result = ""
     if not QFile(path).exists():
@@ -668,13 +677,43 @@ class Repositories(QObject):
                         .strip()
                     )
                     if not qgisMaximumVersion:
-                        qgisMaximumVersion = qgisMinimumVersion[0] + ".99"
+                        qgisMaximumVersion = normalizePluginMaximumVersion(
+                            qgisMinimumVersion, qgisMaximumVersion
+                        )
+                    pythonMinimumVersion = (
+                        pluginNodes.item(i)
+                        .firstChildElement("python_minimum_version")
+                        .text()
+                        .strip()
+                    )
+                    pythonMaximumVersion = (
+                        pluginNodes.item(i)
+                        .firstChildElement("python_maximum_version")
+                        .text()
+                        .strip()
+                    )
+                    hasPythonVersionMetadata = bool(
+                        pythonMinimumVersion or pythonMaximumVersion
+                    )
+                    pythonMinimumVersion = normalizePluginMinimumVersion(
+                        pythonMinimumVersion
+                    )
+                    pythonMaximumVersion = normalizePluginMaximumVersion(
+                        pythonMinimumVersion, pythonMaximumVersion
+                    )
                     # if compatible, add the plugin to the list
                     if not pluginNodes.item(i).firstChildElement(
                         "disabled"
                     ).text().strip().upper() in ["TRUE", "YES"]:
                         if isCompatible(
                             pyQgisVersion(), qgisMinimumVersion, qgisMaximumVersion
+                        ) and (
+                            not hasPythonVersionMetadata
+                            or isCompatible(
+                                pyPythonVersion(),
+                                pythonMinimumVersion,
+                                pythonMaximumVersion,
+                            )
                         ):
                             # add the plugin to the cache
                             plugins.addFromRepository(plugin)
@@ -854,13 +893,30 @@ class Plugins(QObject):
                 qgisMinimumVersion = "0"
             qgisMaximumVersion = pluginMetadata("qgisMaximumVersion").strip()
             if not qgisMaximumVersion:
-                qgisMaximumVersion = qgisMinimumVersion[0] + ".99"
+                qgisMaximumVersion = normalizePluginMaximumVersion(
+                    qgisMinimumVersion, qgisMaximumVersion
+                )
             # if compatible, add the plugin to the list
             if not isCompatible(
                 pyQgisVersion(), qgisMinimumVersion, qgisMaximumVersion
             ):
                 error = "incompatible"
                 errorDetails = f"{qgisMinimumVersion} - {qgisMaximumVersion}"
+            else:
+                pythonMinimumVersion = pluginMetadata("pythonMinimumVersion").strip()
+                pythonMaximumVersion = pluginMetadata("pythonMaximumVersion").strip()
+                if pythonMinimumVersion or pythonMaximumVersion:
+                    pythonMinimumVersion = normalizePluginMinimumVersion(
+                        pythonMinimumVersion
+                    )
+                    pythonMaximumVersion = normalizePluginMaximumVersion(
+                        pythonMinimumVersion, pythonMaximumVersion
+                    )
+                    if not isCompatible(
+                        pyPythonVersion(), pythonMinimumVersion, pythonMaximumVersion
+                    ):
+                        error = "incompatible"
+                        errorDetails = f"{pythonMinimumVersion} - {pythonMaximumVersion}"
         elif not os.path.exists(metadataFile):
             error = "broken"
             errorDetails = QCoreApplication.translate(

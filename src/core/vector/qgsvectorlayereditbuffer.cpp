@@ -23,6 +23,8 @@
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayerutils.h"
 #include "qgsmessagelog.h"
+#include "qgsunsetattributevalue.h"
+#include "qgsvariantutils.h"
 
 
 //! populate two lists (ks, vs) from map - in reverse order
@@ -281,10 +283,31 @@ bool QgsVectorLayerEditBuffer::changeAttributeValues( QgsFeatureId fid, const Qg
 
 bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field, const QVariant &newValue, const QVariant &oldValue )
 {
+  QVariant updatedValue = newValue;
+
   if ( FID_IS_NEW( fid ) )
   {
     if ( !mAddedFeatures.contains( fid ) )
       return false;
+
+    if ( field >= 0 && field < L->fields().count() && L->fields().fieldOrigin( field ) == Qgis::FieldOrigin::Provider )
+    {
+      const int providerIndex = L->fields().fieldOriginIndex( field );
+      const QString defaultValueClause = L->dataProvider()->defaultValueClause( providerIndex );
+      const QgsAttributeList pkAttributeIndexes = L->dataProvider()->pkAttributeIndexes();
+
+      if ( !defaultValueClause.isEmpty()
+           && pkAttributeIndexes.contains( providerIndex )
+           && !QgsVariantUtils::isUnsetAttributeValue( updatedValue ) )
+      {
+        bool ok = false;
+        const qlonglong id = updatedValue.toLongLong( &ok );
+        if ( ok && id < 0 )
+        {
+          updatedValue = QgsUnsetAttributeValue( defaultValueClause );
+        }
+      }
+    }
   }
   else if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::ChangeAttributeValues ) )
   {
@@ -298,7 +321,7 @@ bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field
     return false;
   }
 
-  L->undoStack()->push( new QgsVectorLayerUndoCommandChangeAttribute( this, fid, field, newValue, oldValue ) );
+  L->undoStack()->push( new QgsVectorLayerUndoCommandChangeAttribute( this, fid, field, updatedValue, oldValue ) );
   return true;
 }
 

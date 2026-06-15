@@ -1890,7 +1890,7 @@ bool QgsOgrProvider::addFeaturePrivate( QgsFeature &f, Flags flags, QgsFeatureId
     {
       bool ok = false;
       qlonglong id = attrFid.toLongLong( &ok );
-      if ( ok )
+      if ( ok && id >= 0 )
       {
         OGR_F_SetFID( feature.get(), static_cast<GIntBig>( id ) );
       }

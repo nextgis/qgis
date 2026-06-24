@@ -25,7 +25,7 @@
 
 #include "qgssettings.h"
 #include "qgisapp.h"
-#include "qgsdwgimporter.h"
+#include "dwg/qgsdwgimporter.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayerlabeling.h"
 #include "qgsvectordataprovider.h"

@@ -18,11 +18,15 @@
 #ifndef QGSDWGIMPORTER_H
 #define QGSDWGIMPORTER_H
 
+#include "qgis_core.h"
+
 #include "drw_interface.h"
 
 #include <QCoreApplication>
 #include <QString>
 #include <QElapsedTimer>
+#include <QHash>
+#include <QTransform>
 
 #include <ogr_api.h>
 
@@ -32,18 +36,40 @@
 class QgsCompoundCurve;
 class QgsLineString;
 class QgsCircularString;
-class QgsQgsCoordinateReferenceSystem;
+class QgsCoordinateReferenceSystem;
 class QLabel;
 class QTextCodec;
 
-class QgsDwgImporter : public DRW_Interface
+class CORE_EXPORT QgsDwgImporter
+#ifndef SIP_RUN
+  : public DRW_Interface
+#endif
 {
     Q_DECLARE_TR_FUNCTIONS( QgsDwgImporter )
 
   public:
+    //! Constructor for QgsDwgImporter.
     QgsDwgImporter( const QString &database, const QgsCoordinateReferenceSystem &crs );
-    ~QgsDwgImporter() override;
 
+#ifndef SIP_RUN
+    ~QgsDwgImporter() override;
+#else
+    ~QgsDwgImporter();
+#endif
+
+    /**
+     * Imports a DWG or DXF \a drawing into the importer's GeoPackage database.
+     *
+     * If \a expandInserts is TRUE, block inserts are expanded into the imported
+     * entity tables. If \a useCurves is TRUE, curved geometry types are used
+     * where possible.
+     *
+     * Returns TRUE if the drawing was successfully imported. On failure, \a error
+     * is set to the import error message.
+     */
+    bool importDrawing( const QString &drawing, QString &error, bool expandInserts = true, bool useCurves = true );
+
+#ifndef SIP_RUN
     bool import( const QString &drawing, QString &error, bool expandInserts, bool useCurves, QLabel *label );
 
     //! Called when header is parsed.
@@ -177,8 +203,12 @@ class QgsDwgImporter : public DRW_Interface
     void writeVports() override;
     void writeDimstyles() override;
     void writeAppId() override;
+#endif
 
   private:
+    QgsDwgImporter( const QgsDwgImporter & ) = delete;
+    QgsDwgImporter &operator=( const QgsDwgImporter & ) = delete;
+
     void startTransaction();
     void commitTransaction();
     bool exec( const QString &sql, bool logError = true );

@@ -284,6 +284,7 @@
 %Include auto_generated/diagram/qgsstackedbardiagram.sip
 %Include auto_generated/diagram/qgsstackeddiagram.sip
 %Include auto_generated/diagram/qgstextdiagram.sip
+%Include auto_generated/dwg/qgsdwgimporter.sip
 %Include auto_generated/dxf/qgsdxfexport.sip
 %Include auto_generated/editform/qgseditformconfig.sip
 %Include auto_generated/editform/qgsattributeeditoraction.sip

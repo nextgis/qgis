@@ -1,0 +1,50 @@
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/dwg/qgsdwgimporter.h                                        *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
+ ************************************************************************/
+
+
+class QgsDwgImporter
+{
+%Docstring(signature="appended")
+Imports DWG and DXF drawings into a GeoPackage database.
+%End
+
+%TypeHeaderCode
+#include "qgsdwgimporter.h"
+%End
+  public:
+
+    QgsDwgImporter( const QString &database, const QgsCoordinateReferenceSystem &crs );
+%Docstring
+Constructor for QgsDwgImporter.
+%End
+
+    ~QgsDwgImporter();
+
+    bool importDrawing( const QString &drawing, QString &error /Out/, bool expandInserts = true, bool useCurves = true );
+%Docstring
+Imports a DWG or DXF drawing into the importer's GeoPackage database.
+
+:param drawing: path to the source DWG or DXF file
+:param expandInserts: set to ``True`` to expand block inserts into entity tables
+:param useCurves: set to ``True`` to use curved geometry types where possible
+
+:return: ``True`` if the drawing was successfully imported
+%End
+
+  private:
+    QgsDwgImporter( const QgsDwgImporter & );
+    QgsDwgImporter &operator=( const QgsDwgImporter & );
+};
+
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/dwg/qgsdwgimporter.h                                        *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
+ ************************************************************************/

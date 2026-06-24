@@ -332,6 +332,11 @@ QgsDwgImporter::~QgsDwgImporter()
   }
 }
 
+bool QgsDwgImporter::importDrawing( const QString &drawing, QString &error, bool expandInserts, bool useCurves )
+{
+  return import( drawing, error, expandInserts, useCurves, nullptr );
+}
+
 QString drwVersionToString( DRW::Version version )
 {
   switch ( version )
@@ -2874,6 +2879,9 @@ bool QgsDwgImporter::expandInserts( QString &error, int block, QTransform base )
 
 void QgsDwgImporter::progress( const QString &msg )
 {
+  if ( !mLabel )
+    return;
+
   mLabel->setText( msg );
   qApp->processEvents();
 }

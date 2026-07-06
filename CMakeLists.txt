@@ -571,6 +571,14 @@ if(WITH_CORE)
 
   if (WITH_NGSTD)
     find_anyproject(NGSTD DEFAULT ON COMPONENTS core framework)
+    find_path(NGSTD_INCLUDE_DIRS
+      NAMES core/request.h framework/access/access.h
+      HINTS ${CMAKE_PREFIX_PATH}
+      PATH_SUFFIXES include/ngstd
+    )
+    if (NOT NGSTD_INCLUDE_DIRS)
+      message(FATAL_ERROR "NGSTD headers not found")
+    endif()
     message(STATUS "Found NGSTD: ${NGSTD_LIBRARY} (${NGSTD_VERSION})")
     set(HAVE_NGSTD TRUE)  # used in qgisconfig.h
   endif()

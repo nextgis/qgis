@@ -32,7 +32,7 @@ target_include_directories(authmethod_nextgis_a PUBLIC ${CMAKE_SOURCE_DIR}/src/a
 # require c++17
 target_compile_features(authmethod_nextgis_a PRIVATE cxx_std_17)
 
-target_link_libraries(authmethod_nextgis_a qgis_core)
+target_link_libraries(authmethod_nextgis_a qgis_core ${NGSTD_LIBRARIES})
 
 if (WITH_GUI)
   target_include_directories(authmethod_nextgis_a PRIVATE
@@ -63,7 +63,7 @@ else()
   # require c++17
   target_compile_features(authmethod_nextgis PRIVATE cxx_std_17)
 
-  target_link_libraries(authmethod_nextgis qgis_core)
+  target_link_libraries(authmethod_nextgis qgis_core ${NGSTD_LIBRARIES})
 
   if (WITH_GUI)
     target_include_directories(authmethod_nextgis PRIVATE

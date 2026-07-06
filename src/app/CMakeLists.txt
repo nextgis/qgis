@@ -644,6 +644,7 @@ if (WITH_3D)
 endif()
 
 if(WITH_NGSTD)
+  target_include_directories(qgis_app PRIVATE ${NGSTD_INCLUDE_DIRS})
   target_link_libraries(qgis_app ${NGSTD_LIBRARIES})
 endif()
 

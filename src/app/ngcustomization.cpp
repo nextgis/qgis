@@ -28,10 +28,9 @@
 #include "qgsproject.h"
 
 #include <QMessageBox>
-#include <qchar.h>
-#include <QSet>
 
 #ifdef HAVE_NGSTD
+#include "core/request.h"
 #include "core/version.h"
 #include "framework/access/access.h"
 #include "framework/access/signbutton.h"
@@ -55,6 +54,18 @@ NGQgisApp::NGQgisApp(
 #endif // HAVE_NGSTD
 
   QSettings settings;
+#ifdef HAVE_NGSTD
+  if ( settings.value( QStringLiteral( "proxy/proxyEnabled" ), false ).toBool() )
+  {
+    const QString proxyType = settings.value( QStringLiteral( "proxy/proxyType" ), QStringLiteral( "DefaultProxy" ) ).toString();
+    NGRequest::setProxy( true, proxyType == QLatin1String( "DefaultProxy" ),
+                         settings.value( QStringLiteral( "proxy/proxyHost" ), QString() ).toString(),
+                         settings.value( QStringLiteral( "proxy/proxyPort" ), QString() ).toString().toInt(),
+                         settings.value( QStringLiteral( "proxy/proxyUser" ), QString() ).toString(),
+                         settings.value( QStringLiteral( "proxy/proxyPassword" ), QString() ).toString(),
+                         QStringLiteral( "ANY" ) );
+  }
+#endif // HAVE_NGSTD
   if ( settings.value( "/qgis/checkVersion", true ).toBool() )
     connect( this, SIGNAL( initializationCompleted() ), this, SLOT( checkQgisVersion() ) );
 
@@ -177,12 +188,19 @@ void NGQgisApp::createToolBars()
   QString userInfoEndPointStr = settings.value( "nextgis/user_info_endpoint", NGAccess::instance().userInfoEndpoint() ).toString();
   int authType = settings.value( "nextgis/auth_type", 0 ).toInt();
   NGAccess::AuthSourceType type = static_cast<NGAccess::AuthSourceType>( authType );
-  auto scopes = settings.value( "nextgis/auth_scopes", "" ).toString();
+  auto scopes = settings.value( "nextgis/auth_scopes", "user_info.read" ).toString().trimmed();
+  if ( scopes.isEmpty() )
+    scopes = QStringLiteral( "user_info.read" );
+
   NGAccess::instance().setAuthEndpoint( authEndPointStr );
   NGAccess::instance().setTokenEndpoint( tokenEndPointStr );
   NGAccess::instance().setUserInfoEndpoint( userInfoEndPointStr );
   bool codeChallenge = settings.value( "nextgis/use_code_challenge", "1" ).toBool();
   NGAccess::instance().setUseCodeChallenge( codeChallenge );
+  if ( type == NGAccess::AuthSourceType::NGID )
+  {
+    NGAccess::instance().setUseCodeChallenge( true );
+  }
   NGSignInButton *toolbAuth = new NGSignInButton( QLatin1String( "tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN" ), scopes, endPointStr, type );
 
   QString version = QLatin1String( NEXTGIS_QGIS_VERSION ) + " (" + QLatin1String( VERSION ) + ")";

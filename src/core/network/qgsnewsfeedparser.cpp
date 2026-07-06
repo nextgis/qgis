@@ -17,18 +17,22 @@
 #include "qgis.h"
 #include "qgsnetworkcontentfetchertask.h"
 #include "qgsnetworkcontentfetcher.h"
-#include "qgsnetworkaccessmanager.h"
 #include "qgssetrequestinitiator_p.h"
 #include "qgsjsonutils.h"
 #include "qgsmessagelog.h"
 #include "qgsapplication.h"
+#include "qgsngutils.h"
 #include "qgssettingsentryimpl.h"
+#include "qgswordpressnewsfeedmapper.h"
 
+#include <QBuffer>
 #include <QDateTime>
-#include <QUrlQuery>
-#include <QFile>
 #include <QDir>
+#include <QFile>
+#include <QImageReader>
 #include <QRegularExpression>
+#include <QSaveFile>
+#include <QUrlQuery>
 
 
 const QgsSettingsEntryInteger64 *QgsNewsFeedParser::settingsFeedLastFetchTime = new QgsSettingsEntryInteger64( QStringLiteral( "last-fetch-time" ), sTreeNewsFeed, 0, QStringLiteral( "Feed last fetch time" ), Qgis::SettingsOptions(), 0 );
@@ -43,6 +47,7 @@ const QgsSettingsEntryString *QgsNewsFeedParser::settingsFeedEntryContent = new 
 const QgsSettingsEntryString *QgsNewsFeedParser::settingsFeedEntryLink = new QgsSettingsEntryString( QStringLiteral( "link" ), sTreeNewsFeedEntries, QString(), QStringLiteral( "Entry link" ) );
 const QgsSettingsEntryBool *QgsNewsFeedParser::settingsFeedEntrySticky = new QgsSettingsEntryBool( QStringLiteral( "sticky" ), sTreeNewsFeedEntries, false );
 const QgsSettingsEntryVariant *QgsNewsFeedParser::settingsFeedEntryExpiry = new QgsSettingsEntryVariant( QStringLiteral( "expiry" ), sTreeNewsFeedEntries, QVariant(), QStringLiteral( "Expiry date" ) );
+const QgsSettingsEntryBool *QgsNewsFeedParser::settingsFeedDismissedEntry = new QgsSettingsEntryBool( QStringLiteral( "dismissed" ), sTreeNewsFeedDismissedEntries, false, QStringLiteral( "Dismissed news feed entry" ) );
 
 
 
@@ -55,49 +60,6 @@ QgsNewsFeedParser::QgsNewsFeedParser( const QUrl &feedUrl, const QString &authcf
 {
   // first thing we do is populate with existing entries
   readStoredEntries();
-
-  QUrlQuery query( feedUrl );
-
-  const qint64 after = settingsFeedLastFetchTime->value( mFeedKey );
-  if ( after > 0 )
-    query.addQueryItem( QStringLiteral( "after" ), qgsDoubleToString( after, 0 ) );
-
-  QString feedLanguage = settingsFeedLanguage->value( mFeedKey );
-  if ( feedLanguage.isEmpty() )
-  {
-    feedLanguage = QgsApplication::settingsLocaleUserLocale->valueWithDefaultOverride( QStringLiteral( "en" ) );
-  }
-  if ( !feedLanguage.isEmpty() && feedLanguage != QLatin1String( "C" ) )
-    query.addQueryItem( QStringLiteral( "lang" ), feedLanguage.mid( 0, 2 ) );
-
-  if ( settingsFeedLatitude->exists( mFeedKey ) && settingsFeedLongitude->exists( mFeedKey ) )
-  {
-    const double feedLat = settingsFeedLatitude->value( mFeedKey );
-    const double feedLong = settingsFeedLongitude->value( mFeedKey );
-
-    // hack to allow testing using local files
-    if ( feedUrl.isLocalFile() )
-    {
-      query.addQueryItem( QStringLiteral( "lat" ), QString::number( static_cast< int >( feedLat ) ) );
-      query.addQueryItem( QStringLiteral( "lon" ), QString::number( static_cast< int >( feedLong ) ) );
-    }
-    else
-    {
-      query.addQueryItem( QStringLiteral( "lat" ), qgsDoubleToString( feedLat ) );
-      query.addQueryItem( QStringLiteral( "lon" ), qgsDoubleToString( feedLong ) );
-    }
-  }
-
-  // bit of a hack to allow testing using local files
-  if ( feedUrl.isLocalFile() )
-  {
-    if ( !query.toString().isEmpty() )
-      mFeedUrl = QUrl( mFeedUrl.toString() + '_' + query.toString() );
-  }
-  else
-  {
-    mFeedUrl.setQuery( query ); // doesn't work for local file urls
-  }
 }
 
 QList<QgsNewsFeedParser::Entry> QgsNewsFeedParser::entries() const
@@ -107,43 +69,7 @@ QList<QgsNewsFeedParser::Entry> QgsNewsFeedParser::entries() const
 
 void QgsNewsFeedParser::dismissEntry( int key )
 {
-  Entry dismissed;
-  const int beforeSize = mEntries.size();
-  mEntries.erase( std::remove_if( mEntries.begin(), mEntries.end(),
-                                  [key, &dismissed]( const Entry & entry )
-  {
-    if ( entry.key == key )
-    {
-      dismissed = entry;
-      return true;
-    }
-    return false;
-  } ), mEntries.end() );
-  if ( beforeSize == mEntries.size() )
-    return; // didn't find matching entry
-
-  try
-  {
-    sTreeNewsFeedEntries->deleteItem( QString::number( key ), {mFeedKey} );
-  }
-  catch ( QgsSettingsException &e )
-  {
-    QgsDebugError( QStringLiteral( "Could not dismiss news feed entry: %1" ).arg( e.what( ) ) );
-  }
-
-  // also remove preview image, if it exists
-  if ( !dismissed.imageUrl.isEmpty() )
-  {
-    const QString previewDir = QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
-    const QString imagePath = QStringLiteral( "%1/%2.png" ).arg( previewDir ).arg( key );
-    if ( QFile::exists( imagePath ) )
-    {
-      QFile::remove( imagePath );
-    }
-  }
-
-  if ( !mBlockSignals )
-    emit entryDismissed( dismissed );
+  removeEntry( key, true );
 }
 
 void QgsNewsFeedParser::dismissAll()
@@ -162,7 +88,7 @@ QString QgsNewsFeedParser::authcfg() const
 
 void QgsNewsFeedParser::fetch()
 {
-  QNetworkRequest req( mFeedUrl );
+  QNetworkRequest req( feedUrlForRequest() );
   QgsSetRequestInitiatorClass( req, QStringLiteral( "QgsNewsFeedParser" ) );
 
   mFetchStartTime = QDateTime::currentDateTimeUtc().toSecsSinceEpoch();
@@ -204,12 +130,15 @@ void QgsNewsFeedParser::onFetch( const QString &content )
   for ( const QVariant &e : entries )
   {
     Entry incomingEntry;
-    const QVariantMap entryMap = e.toMap();
+    QVariantMap entryMap = e.toMap();
+    if ( QgsWordPressNewsFeedMapper::canMap( entryMap ) )
+      entryMap = QgsWordPressNewsFeedMapper::create( entryMap )->toQgisFeedEntry( entryMap );
+
     incomingEntry.key = entryMap.value( QStringLiteral( "pk" ) ).toInt();
     incomingEntry.title = entryMap.value( QStringLiteral( "title" ) ).toString();
     incomingEntry.imageUrl = entryMap.value( QStringLiteral( "image" ) ).toString();
     incomingEntry.content = entryMap.value( QStringLiteral( "content" ) ).toString();
-    incomingEntry.link = entryMap.value( QStringLiteral( "url" ) ).toString();
+    incomingEntry.link = QUrl( entryMap.value( QStringLiteral( "url" ) ).toString() );
     incomingEntry.sticky = entryMap.value( QStringLiteral( "sticky" ) ).toBool();
     bool hasExpiry = false;
     const qlonglong expiry = entryMap.value( QStringLiteral( "publish_to" ) ).toLongLong( &hasExpiry );
@@ -225,25 +154,29 @@ void QgsNewsFeedParser::onFetch( const QString &content )
     } )};
     const bool entryExists { entryIter != mEntries.end() };
 
+    if ( isEntryDismissed( incomingEntry.key ) )
+    {
+      if ( entryExists )
+        removeEntry( incomingEntry.key, false );
+      continue;
+    }
+
     // case 1: existing entry is now expired, dismiss
     if ( hasExpiry && expiry < mFetchStartTime )
     {
-      dismissEntry( incomingEntry.key );
+      removeEntry( incomingEntry.key, false );
     }
     // case 2: existing entry edited
     else if ( entryExists )
     {
       const bool imageNeedsUpdate = ( entryIter->imageUrl != incomingEntry.imageUrl );
+      if ( !imageNeedsUpdate )
+        incomingEntry.image = entryIter->image;
+
       // also remove preview image, if it exists
-      if ( imageNeedsUpdate && ! entryIter->imageUrl.isEmpty() )
-      {
-        const QString previewDir = QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
-        const QString imagePath = QStringLiteral( "%1/%2.png" ).arg( previewDir ).arg( entryIter->key );
-        if ( QFile::exists( imagePath ) )
-        {
-          QFile::remove( imagePath );
-        }
-      }
+      if ( imageNeedsUpdate && !entryIter->imageUrl.isEmpty() )
+        QFile::remove( cachedImagePath( entryIter->key ) );
+
       *entryIter = incomingEntry;
       if ( imageNeedsUpdate && ! incomingEntry.imageUrl.isEmpty() )
         fetchImageForEntry( incomingEntry );
@@ -288,15 +221,12 @@ void QgsNewsFeedParser::readStoredEntries()
   for ( const QString &entry : existing )
   {
     const Entry e = readEntryFromSettings( entry.toInt() );
-    if ( !e.expiry.isValid() || e.expiry > QDateTime::currentDateTime() )
-      mEntries.append( e );
-    else
+    if ( isEntryDismissed( e.key ) || ( e.expiry.isValid() && e.expiry <= QDateTime::currentDateTime() ) )
     {
-      // expired entry, prune it
-      mBlockSignals = true;
-      dismissEntry( e.key );
-      mBlockSignals = false;
+      deleteStoredEntry( e.key );
     }
+    else
+      mEntries.append( e );
   }
 }
 
@@ -312,12 +242,19 @@ QgsNewsFeedParser::Entry QgsNewsFeedParser::readEntryFromSettings( const int key
   entry.expiry = settingsFeedEntryExpiry->value( {mFeedKey, QString::number( key )} ).toDateTime();
   if ( !entry.imageUrl.isEmpty() )
   {
-    const QString previewDir = QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
-    const QString imagePath = QStringLiteral( "%1/%2.png" ).arg( previewDir ).arg( entry.key );
+    const QString imagePath = cachedImagePath( entry.key );
     if ( QFile::exists( imagePath ) )
     {
       const QImage img( imagePath );
-      entry.image = QPixmap::fromImage( img );
+      if ( img.isNull() )
+      {
+        QFile::remove( imagePath );
+        fetchImageForEntry( entry );
+      }
+      else
+      {
+        entry.image = QPixmap::fromImage( img );
+      }
     }
     else
     {
@@ -336,6 +273,8 @@ void QgsNewsFeedParser::storeEntryInSettings( const QgsNewsFeedParser::Entry &en
   settingsFeedEntrySticky->setValue( entry.sticky, {mFeedKey, QString::number( entry.key )} );
   if ( entry.expiry.isValid() )
     settingsFeedEntryExpiry->setValue( entry.expiry, {mFeedKey, QString::number( entry.key )} );
+  else
+    settingsFeedEntryExpiry->setValue( QVariant(), {mFeedKey, QString::number( entry.key )} );
 }
 
 void QgsNewsFeedParser::fetchImageForEntry( const QgsNewsFeedParser::Entry &entry )
@@ -352,7 +291,19 @@ void QgsNewsFeedParser::fetchImageForEntry( const QgsNewsFeedParser::Entry &entr
     {
       const int entryIndex = static_cast< int >( std::distance( mEntries.begin(), findIter ) );
 
-      QImage img = QImage::fromData( fetcher->reply()->readAll() );
+      const QByteArray imageData = fetcher->reply()->readAll();
+      QBuffer buffer;
+      buffer.setData( imageData );
+      buffer.open( QIODevice::ReadOnly );
+
+      QImageReader reader( &buffer );
+      reader.setDecideFormatFromContent( true );
+      QImage img = reader.read();
+      if ( img.isNull() )
+      {
+        fetcher->deleteLater();
+        return;
+      }
 
       QSize size = img.size();
       bool resize = false;
@@ -385,10 +336,15 @@ void QgsNewsFeedParser::fetchImageForEntry( const QgsNewsFeedParser::Entry &entr
       previewPainter.end();
 
       // Save image, so we don't have to fetch it next time
-      const QString previewDir = QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
-      QDir().mkdir( previewDir );
-      const QString imagePath = QStringLiteral( "%1/%2.png" ).arg( previewDir ).arg( entry.key );
-      previewImage.save( imagePath );
+      QDir().mkpath( QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() ) );
+      QSaveFile saveFile( cachedImagePath( entry.key ) );
+      if ( saveFile.open( QIODevice::WriteOnly ) )
+      {
+        if ( previewImage.save( &saveFile, "PNG" ) )
+          saveFile.commit();
+        else
+          saveFile.cancelWriting();
+      }
 
       mEntries[ entryIndex ].image = QPixmap::fromImage( previewImage );
       this->emit imageFetched( entry.key, mEntries[ entryIndex ].image );
@@ -404,4 +360,108 @@ QString QgsNewsFeedParser::keyForFeed( const QString &baseUrl )
   QString res = baseUrl;
   res = res.replace( sRegexp, QString() );
   return res;
+}
+
+QUrl QgsNewsFeedParser::feedUrlForRequest() const
+{
+  QUrl requestUrl( mFeedUrl );
+  QUrlQuery query( requestUrl );
+
+  if ( requestUrl.isLocalFile() )
+  {
+    const qint64 after = settingsFeedLastFetchTime->value( mFeedKey );
+    if ( after > 0 )
+      query.addQueryItem( QStringLiteral( "after" ), QString::number( after ) );
+  }
+
+  QString feedLanguage = settingsFeedLanguage->value( mFeedKey );
+  if ( feedLanguage.isEmpty() )
+    feedLanguage = QgsNgUtils::locale();
+
+  if ( !feedLanguage.isEmpty() && feedLanguage != QLatin1String( "C" ) )
+    query.addQueryItem( QStringLiteral( "lang" ), feedLanguage.mid( 0, 2 ) );
+
+  if ( settingsFeedLatitude->exists( mFeedKey ) && settingsFeedLongitude->exists( mFeedKey ) )
+  {
+    const double feedLat = settingsFeedLatitude->value( mFeedKey );
+    const double feedLong = settingsFeedLongitude->value( mFeedKey );
+
+    if ( requestUrl.isLocalFile() )
+    {
+      query.addQueryItem( QStringLiteral( "lat" ), QString::number( static_cast< int >( feedLat ) ) );
+      query.addQueryItem( QStringLiteral( "lon" ), QString::number( static_cast< int >( feedLong ) ) );
+    }
+    else
+    {
+      query.addQueryItem( QStringLiteral( "lat" ), qgsDoubleToString( feedLat ) );
+      query.addQueryItem( QStringLiteral( "lon" ), qgsDoubleToString( feedLong ) );
+    }
+  }
+
+  if ( requestUrl.isLocalFile() )
+  {
+    if ( !query.toString().isEmpty() )
+      return QUrl( requestUrl.toString() + '_' + query.toString() );
+
+    return requestUrl;
+  }
+
+  requestUrl.setQuery( query );
+  return requestUrl;
+}
+
+QString QgsNewsFeedParser::cachedImagePath( int key ) const
+{
+  const QString previewDir = QStringLiteral( "%1/previewImages" ).arg( QgsApplication::qgisSettingsDirPath() );
+  return QStringLiteral( "%1/%2.png" ).arg( previewDir ).arg( key );
+}
+
+void QgsNewsFeedParser::deleteStoredEntry( int key )
+{
+  try
+  {
+    sTreeNewsFeedEntries->deleteItem( QString::number( key ), {mFeedKey} );
+  }
+  catch ( QgsSettingsException &e )
+  {
+    QgsDebugError( QStringLiteral( "Could not remove news feed entry: %1" ).arg( e.what( ) ) );
+  }
+
+  QFile::remove( cachedImagePath( key ) );
+}
+
+void QgsNewsFeedParser::removeEntry( int key, bool rememberDismissal )
+{
+  Entry dismissed;
+  const qsizetype beforeSize = mEntries.size();
+  mEntries.erase( std::remove_if( mEntries.begin(), mEntries.end(),
+                                  [key, &dismissed]( const Entry & entry )
+  {
+    if ( entry.key == key )
+    {
+      dismissed = entry;
+      return true;
+    }
+    return false;
+  } ), mEntries.end() );
+  if ( beforeSize == mEntries.size() )
+    return;
+
+  if ( rememberDismissal )
+    storeDismissedEntry( key );
+
+  deleteStoredEntry( key );
+
+  if ( !mBlockSignals )
+    emit entryDismissed( dismissed );
+}
+
+bool QgsNewsFeedParser::isEntryDismissed( int key ) const
+{
+  return settingsFeedDismissedEntry->value( {mFeedKey, QString::number( key )} );
+}
+
+void QgsNewsFeedParser::storeDismissedEntry( int key )
+{
+  settingsFeedDismissedEntry->setValue( true, {mFeedKey, QString::number( key )} );
 }

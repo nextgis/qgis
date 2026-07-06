@@ -266,6 +266,7 @@ set(QGIS_CORE_SRCS
   network/qgsnetworkreplyparser.cpp
   network/qgsnewsfeedmodel.cpp
   network/qgsnewsfeedparser.cpp
+  network/qgswordpressnewsfeedmapper.cpp
   network/qgshttpheaders.cpp
   network/qgsrangerequestcache.cpp
 
@@ -518,6 +519,7 @@ set(QGIS_CORE_SRCS
   qgslegendstyle.cpp
   qgslocaldefaultsettings.cpp
   qgslocalec.cpp
+  qgsngutils.cpp
   qgslocalizeddatapathregistry.cpp
   qgslogger.cpp
   qgsmapclippingregion.cpp
@@ -1212,6 +1214,7 @@ set(QGIS_CORE_HDRS
   qgslegendstyle.h
   qgslocaldefaultsettings.h
   qgslocalec.h
+  qgsngutils.h
   qgslocalizeddatapathregistry.h
   qgslogger.h
   qgsmapclippingregion.h
@@ -1791,6 +1794,7 @@ set(QGIS_CORE_HDRS
   network/qgsnetworkreplyparser.h
   network/qgsnewsfeedmodel.h
   network/qgsnewsfeedparser.h
+  network/qgswordpressnewsfeedmapper.h
   network/qgshttpheaders.h
   network/qgsrangerequestcache.h
 

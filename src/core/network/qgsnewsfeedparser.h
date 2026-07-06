@@ -60,6 +60,9 @@ class CORE_EXPORT QgsNewsFeedParser : public QObject
     static const QgsSettingsEntryString *settingsFeedEntryLink;
     static const QgsSettingsEntryBool *settingsFeedEntrySticky;
     static const QgsSettingsEntryVariant *settingsFeedEntryExpiry;
+
+    static inline QgsSettingsTreeNamedListNode *sTreeNewsFeedDismissedEntries = sTreeNewsFeed->createNamedListNode( QStringLiteral( "dismissed-entries" ) );
+    static const QgsSettingsEntryBool *settingsFeedDismissedEntry;
 #endif
 
     /**
@@ -202,6 +205,12 @@ class CORE_EXPORT QgsNewsFeedParser : public QObject
     Entry readEntryFromSettings( int key );
     void storeEntryInSettings( const Entry &entry );
     void fetchImageForEntry( const Entry &entry );
+    QUrl feedUrlForRequest() const;
+    QString cachedImagePath( int key ) const;
+    void deleteStoredEntry( int key );
+    void removeEntry( int key, bool rememberDismissal );
+    bool isEntryDismissed( int key ) const;
+    void storeDismissedEntry( int key );
 
     friend class TestQgsNewsFeedParser;
 

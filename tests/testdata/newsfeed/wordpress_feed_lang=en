@@ -1,0 +1,110 @@
+[
+  {
+    "id": 101,
+    "date_gmt": "2026-07-01T10:00:00",
+    "link": "https://nextgis.com/news/first-post/",
+    "title": {
+      "rendered": "  First &amp; News  "
+    },
+    "excerpt": {
+      "rendered": "<p>Hello <strong>world</strong> <script>alert(1)</script><a href=\"https://nextgis.com/news/first-post/\">more</a></p>"
+    },
+    "sticky": true,
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "media_type": "image",
+          "source_url": "file:///tmp/full-image.webp",
+          "media_details": {
+            "sizes": {
+              "medium_large": {
+                "width": 512,
+                "source_url": "file:///tmp/medium-large.jpg"
+              },
+              "large": {
+                "width": 1200,
+                "source_url": "file:///tmp/large.jpg"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": 102,
+    "date_gmt": "2026-06-30T09:15:00",
+    "link": "https://nextgis.com/news/second-post/",
+    "title": {
+      "rendered": "Second post"
+    },
+    "excerpt": {
+      "rendered": "<p>Line 1<br>Line 2 <em>italic</em> <span style=\"color:red\">red</span></p>"
+    },
+    "sticky": false,
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "media_type": "image",
+          "source_url": "file:///tmp/source-only.gif",
+          "media_details": {
+            "sizes": {
+              "thumbnail": {
+                "width": 150,
+                "source_url": "file:///tmp/thumb.jpg"
+              },
+              "small": {
+                "width": 400,
+                "source_url": "file:///tmp/small.jpg"
+              },
+              "large": {
+                "width": 900,
+                "source_url": "file:///tmp/large-900.jpeg"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": 103,
+    "date_gmt": "2026-06-29T08:00:00",
+    "link": "https://nextgis.com/news/third-post/",
+    "title": {
+      "rendered": "Third post"
+    },
+    "excerpt": {
+      "rendered": "<p>Fallback image</p>"
+    },
+    "sticky": false,
+    "_embedded": {
+      "wp:featuredmedia": [
+        {
+          "media_type": "image",
+          "source_url": "file:///tmp/fallback-image.webp",
+          "media_details": {
+            "sizes": {
+              "broken": {
+                "width": 0,
+                "source_url": ""
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": 104,
+    "date_gmt": "2026-06-28T07:00:00",
+    "link": "https://nextgis.com/news/fourth-post/",
+    "title": {
+      "rendered": "Fourth post"
+    },
+    "excerpt": {
+      "rendered": "<p>No embedded image</p>"
+    },
+    "sticky": false
+  }
+]

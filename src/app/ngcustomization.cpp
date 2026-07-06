@@ -244,26 +244,3 @@ NGCPLHTTPFetchOverrider::~NGCPLHTTPFetchOverrider()
   CPLHTTPSetFetchCallback( nullptr, nullptr );
 }
 #endif
-
-QString nextgisDomain( const QString &subdomain )
-{
-  // Detect target TLD based on locale
-  const QString systemLocale = QLocale::system().name().left( 2 );
-  const QString userLocale = QgsApplication::settingsLocaleUserLocale->valueWithDefaultOverride( QStringLiteral( "en" ) ).left( 2 );
-  const QString locale = QgsApplication::settingsLocaleOverrideFlag->value() ? userLocale : systemLocale;
-
-  static const QSet<QString> ruLangs {
-    QStringLiteral( "be" ), QStringLiteral( "kk" ), QStringLiteral( "ky" ),
-    QStringLiteral( "ru" ), QStringLiteral( "uk" )
-  };
-  const QString tld = ruLangs.contains( locale ) ? QStringLiteral( "ru" )
-                                                 : QStringLiteral( "com" );
-
-  const QString trimmed = subdomain.trimmed();
-  if ( trimmed.isEmpty() )
-  {
-    return QStringLiteral( "https://nextgis.%1" ).arg( tld );
-  }
-
-  return QStringLiteral( "https://%1.nextgis.%2" ).arg( trimmed, tld );
-}

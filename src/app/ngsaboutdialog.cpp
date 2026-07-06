@@ -19,9 +19,9 @@
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #include "ngsaboutdialog.h"
-#include "ngcustomization.h"
 #include "ui_ngsaboutdialog.h"
 #include "qgsconfig.h"
+#include "qgsngutils.h"
 
 #include <QSysInfo>
 #include <QProcess>
@@ -165,7 +165,7 @@ NgsAboutDialog::NgsAboutDialog( QWidget *parent )
 
   details += "<hr>";
   details += "<div style='margin:10;padding:0;line-height:150%;font-size:14px' align='center'>";
-  details += "<a href='" + nextgisDomain() + "'><b>NextGIS</b></a>";
+  details += "<a href='" + QgsNgUtils::nextgisDomain() + "'><b>NextGIS</b></a>";
 
   details += "</div></body></html>";
 

@@ -15,7 +15,6 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "ngcustomization.h"
 #include "qgsapplication.h"
 #include "qgsoptions.h"
 #include "moc_qgsoptions.cpp"
@@ -55,6 +54,7 @@
 #include "qgslocatorwidget.h"
 #include "qgslocatoroptionswidget.h"
 #include "qgsgui.h"
+#include "qgsngutils.h"
 #include "qgswelcomepage.h"
 #include "qgsnewsfeedparser.h"
 #include "qgsbearingnumericformat.h"
@@ -422,7 +422,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   connect( mBtnRemoveHiddenPath, &QAbstractButton::clicked, this, &QgsOptions::removeHiddenPath );
 
   //locations of the QGIS help
-  const QStringList helpPathList = mSettings->value( QStringLiteral( "help/helpSearchPath" ), QStringLiteral( "%1/docs_ngqgis/source/index.html" ).arg( nextgisDomain( "docs" ) ) ).toStringList();
+  const QStringList helpPathList = mSettings->value( QStringLiteral( "help/helpSearchPath" ), QStringLiteral( "%1/docs_ngqgis/source/index.html" ).arg( QgsNgUtils::nextgisDomain( QStringLiteral( "docs" ) ) ) ).toStringList();
   for ( const QString &path : helpPathList )
   {
     QTreeWidgetItem *item = new QTreeWidgetItem();

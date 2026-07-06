@@ -70,6 +70,4 @@ class APP_EXPORT NGQgisApp : public QgisApp
     void startUpdate();
 };
 
-QString APP_EXPORT nextgisDomain( const QString &subdomain = QString() );
-
 #endif // NGCUSTOMIZATION_H

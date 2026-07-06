@@ -17,9 +17,9 @@
 
 #include "qgsabout.h"
 #include "moc_qgsabout.cpp"
-#include "ngcustomization.h"
 #include "qgsapplication.h"
 #include "qgsauthmethodregistry.h"
+#include "qgsngutils.h"
 #include "qgsproviderregistry.h"
 #include "qgslogger.h"
 #include <QClipboard>
@@ -288,7 +288,7 @@ void QgsAbout::btnQgisUser_clicked()
 
 void QgsAbout::btnQgisHome_clicked()
 {
-  openUrl( QString( nextgisDomain() + QStringLiteral( "/nextgis-qgis" ) ) );
+  openUrl( QString( QgsNgUtils::nextgisDomain() + QStringLiteral( "/nextgis-qgis" ) ) );
 }
 
 void QgsAbout::openUrl( const QUrl &url )

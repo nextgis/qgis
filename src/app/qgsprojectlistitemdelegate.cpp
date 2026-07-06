@@ -86,7 +86,8 @@ void QgsProjectListItemDelegate::paint( QPainter *painter, const QStyleOptionVie
 
   if ( !icon.isNull() )
   {
-    painter->drawPixmap( option.rect.left() + 1.25 * mRoundedRectSizePixels, option.rect.top() + 1.25 * mRoundedRectSizePixels, iconSize.width(), iconSize.height(), icon );
+    const int iconTop = static_cast< int >( option.rect.top() + ( option.rect.height() - iconSize.height() ) / 2.0 );
+    painter->drawPixmap( option.rect.left() + 1.25 * mRoundedRectSizePixels, iconTop, iconSize.width(), iconSize.height(), icon );
   }
 
   painter->translate( option.rect.left() + ( !icon.isNull() ? iconSize.width() + 3.125 * mRoundedRectSizePixels : 1.875 * mRoundedRectSizePixels ), option.rect.top() + 1.875 * mRoundedRectSizePixels );
@@ -243,7 +244,8 @@ void QgsNewsItemListItemDelegate::paint( QPainter *painter, const QStyleOptionVi
 
   if ( !icon.isNull() )
   {
-    painter->drawPixmap( option.rect.left() + 1.25 * mRoundedRectSizePixels, option.rect.top() + 1.25 * mRoundedRectSizePixels, iconSize.width(), iconSize.height(), icon );
+    const int iconTop = static_cast< int >( option.rect.top() + ( option.rect.height() - iconSize.height() ) / 2.0 );
+    painter->drawPixmap( option.rect.left() + 1.25 * mRoundedRectSizePixels, iconTop, iconSize.width(), iconSize.height(), icon );
   }
 
   // Gross, but not well supported in Qt

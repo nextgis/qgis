@@ -17,6 +17,9 @@
 #include "qgstest.h"
 #include <QObject>
 #include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QImage>
+#include "qgsngutils.h"
 #include "qgsnewsfeedparser.h"
 #include "qgsnewsfeedmodel.h"
 
@@ -40,6 +43,10 @@ class TestQgsNewsFeedParser : public QObject
     void testModel();
     void testProxyModel();
     void testUpdatedEntries();
+    void testWordPressMapping();
+    void testNgUtils();
+    void testPersistedPreviewImage();
+    void testPersistedPreviewImageSurvivesRefetch();
 };
 
 
@@ -108,7 +115,7 @@ void TestQgsNewsFeedParser::testFetch()
 
   entries.clear();
 
-  // after a fetch, the current timestamp should be saved to avoid refetching these
+  // after a fetch, the current timestamp should be saved
   const uint after = QgsNewsFeedParser::settingsFeedLastFetchTime->value( feedKey );
   QVERIFY( after >= beforeTime );
 
@@ -178,12 +185,28 @@ void TestQgsNewsFeedParser::testFetch()
   QCOMPARE( parser4.entries().at( 0 ).title, QStringLiteral( "QGIS acquired by ESRI" ) );
   QCOMPARE( parser4.entries().at( 1 ).title, QStringLiteral( "Null Island QGIS Meeting" ) );
   QCOMPARE( parser4.entries().at( 2 ).title, QStringLiteral( "QGIS Italian Meeting" ) );
-  // even if we re-fetch, the dismissed entry should not come back
+
+  // even if we re-fetch the full feed, the dismissed entry should not come back
+  QgsNewsFeedParser::settingsFeedLastFetchTime->setValue( 0, feedKey );
+  QEventLoop loop4;
+  connect( &parser4, &QgsNewsFeedParser::fetched, this, [=, &loop4, &entries]( const QList<QgsNewsFeedParser::Entry> &e ) {
+    entries = e;
+    loop4.quit();
+  } );
   parser4.fetch();
-  QCOMPARE( parser4.entries().count(), 3 );
-  QCOMPARE( parser4.entries().at( 0 ).title, QStringLiteral( "QGIS acquired by ESRI" ) );
-  QCOMPARE( parser4.entries().at( 1 ).title, QStringLiteral( "Null Island QGIS Meeting" ) );
-  QCOMPARE( parser4.entries().at( 2 ).title, QStringLiteral( "QGIS Italian Meeting" ) );
+  loop4.exec();
+  QCOMPARE( entries.count(), 5 );
+  QCOMPARE( parser4.entries().count(), 4 );
+
+  QStringList titles;
+  for ( const QgsNewsFeedParser::Entry &entry : parser4.entries() )
+    titles << entry.title;
+
+  QVERIFY( !titles.contains( QStringLiteral( "Next Microsoft Windows code name revealed" ) ) );
+  QVERIFY( titles.contains( QStringLiteral( "QGIS core will be rewritten in Rust" ) ) );
+  QVERIFY( titles.contains( QStringLiteral( "QGIS acquired by ESRI" ) ) );
+  QVERIFY( titles.contains( QStringLiteral( "Null Island QGIS Meeting" ) ) );
+  QVERIFY( titles.contains( QStringLiteral( "QGIS Italian Meeting" ) ) );
 
   // dismiss all
   parser4.dismissAll();
@@ -461,6 +484,150 @@ void TestQgsNewsFeedParser::testUpdatedEntries()
   QCOMPARE( parser2.entries().at( 1 ).title, QStringLiteral( "Null Island QGIS Meeting" ) );
   QCOMPARE( parser2.entries().at( 2 ).title, QStringLiteral( "QGIS Italian Meeting Revisited" ) );
   QCOMPARE( parser2.entries().at( 2 ).expiry.toSecsSinceEpoch(), 7868426853 );
+}
+
+void TestQgsNewsFeedParser::testWordPressMapping()
+{
+  QList<QgsNewsFeedParser::Entry> entries;
+  const QString originalLocale = QgsApplication::settingsLocaleUserLocale->value();
+  const bool originalOverride = QgsApplication::settingsLocaleOverrideFlag->value();
+  QgsApplication::settingsLocaleOverrideFlag->setValue( true );
+  QgsApplication::settingsLocaleUserLocale->setValue( QStringLiteral( "en" ) );
+
+  const QUrl url( QUrl::fromLocalFile( QStringLiteral( TEST_DATA_DIR ) + "/newsfeed/wordpress_feed" ) );
+  const QString feedKey = QgsNewsFeedParser::keyForFeed( url.toString() );
+  QgsNewsFeedParser::sTreeNewsFeed->deleteItem( feedKey );
+
+  QgsNewsFeedParser parser( url );
+  QEventLoop loop;
+  connect( &parser, &QgsNewsFeedParser::fetched, this, [=, &loop, &entries]( const QList<QgsNewsFeedParser::Entry> &e ) {
+    entries = e;
+    loop.quit();
+  } );
+
+  parser.fetch();
+  loop.exec();
+
+  QCOMPARE( entries.count(), 4 );
+  QCOMPARE( parser.entries().count(), 4 );
+
+  QCOMPARE( parser.entries().at( 0 ).key, 101 );
+  QCOMPARE( parser.entries().at( 0 ).title, QStringLiteral( "First & News" ) );
+  QCOMPARE( parser.entries().at( 0 ).link, QUrl( QStringLiteral( "https://nextgis.com/news/first-post/?utm_source=nextgisqgis&utm_medium=news_feed&utm_campaign=constant&utm_content=en" ) ) );
+  QCOMPARE( parser.entries().at( 0 ).imageUrl, QStringLiteral( "file:///tmp/medium-large.jpg" ) );
+  QCOMPARE( parser.entries().at( 0 ).sticky, true );
+  QVERIFY( parser.entries().at( 0 ).content.contains( QStringLiteral( "<strong>world</strong>" ) ) );
+  QVERIFY( parser.entries().at( 0 ).content.contains( QStringLiteral( "<a href=\"https://nextgis.com/news/first-post/\">more</a>" ) ) );
+  QVERIFY( !parser.entries().at( 0 ).content.contains( QStringLiteral( "<script" ) ) );
+
+  QCOMPARE( parser.entries().at( 1 ).link, QUrl( QStringLiteral( "https://nextgis.com/news/second-post/?utm_source=nextgisqgis&utm_medium=news_feed&utm_campaign=constant&utm_content=en" ) ) );
+  QCOMPARE( parser.entries().at( 1 ).imageUrl, QStringLiteral( "file:///tmp/large-900.jpeg" ) );
+  QVERIFY( parser.entries().at( 1 ).content.contains( QStringLiteral( "<br>" ) ) );
+  QVERIFY( parser.entries().at( 1 ).content.contains( QStringLiteral( "<em>italic</em>" ) ) );
+  QVERIFY( !parser.entries().at( 1 ).content.contains( QStringLiteral( "<span" ) ) );
+
+  QCOMPARE( parser.entries().at( 2 ).imageUrl, QStringLiteral( "file:///tmp/fallback-image.webp" ) );
+  QCOMPARE( parser.entries().at( 3 ).imageUrl, QString() );
+
+  QgsApplication::settingsLocaleUserLocale->setValue( originalLocale );
+  QgsApplication::settingsLocaleOverrideFlag->setValue( originalOverride );
+}
+
+void TestQgsNewsFeedParser::testNgUtils()
+{
+  const QString originalLocale = QgsApplication::settingsLocaleUserLocale->value();
+  const bool originalOverride = QgsApplication::settingsLocaleOverrideFlag->value();
+
+  QgsApplication::settingsLocaleOverrideFlag->setValue( true );
+  QgsApplication::settingsLocaleUserLocale->setValue( QStringLiteral( "ru_RU" ) );
+  QCOMPARE( QgsNgUtils::locale(), QStringLiteral( "ru" ) );
+  QCOMPARE( QgsNgUtils::nextgisDomain(), QStringLiteral( "https://nextgis.ru" ) );
+  QCOMPARE( QgsNgUtils::nextgisDomain( QStringLiteral( "docs" ) ), QStringLiteral( "https://docs.nextgis.ru" ) );
+  QCOMPARE( QgsNgUtils::utmTags( QStringLiteral( "news_feed" ) ), QStringLiteral( "utm_source=nextgisqgis&utm_medium=news_feed&utm_campaign=constant&utm_content=ru" ) );
+
+  QgsApplication::settingsLocaleUserLocale->setValue( QStringLiteral( "C" ) );
+  QCOMPARE( QgsNgUtils::locale(), QStringLiteral( "en" ) );
+  QCOMPARE( QgsNgUtils::nextgisDomain(), QStringLiteral( "https://nextgis.com" ) );
+
+  QgsApplication::settingsLocaleUserLocale->setValue( originalLocale );
+  QgsApplication::settingsLocaleOverrideFlag->setValue( originalOverride );
+}
+
+void TestQgsNewsFeedParser::testPersistedPreviewImage()
+{
+  const QUrl url( QStringLiteral( "persisted-image-test" ) );
+  const QString feedKey = QgsNewsFeedParser::keyForFeed( url.toString() );
+  QgsNewsFeedParser::sTreeNewsFeed->deleteItem( feedKey );
+
+  QgsNewsFeedParser parser( url );
+  QgsNewsFeedParser::Entry entry;
+  entry.key = 12345;
+  entry.title = QStringLiteral( "entry with cached image" );
+  entry.imageUrl = QStringLiteral( "https://nextgis.com/image.png" );
+  parser.storeEntryInSettings( entry );
+
+  const QString cachedPath = parser.cachedImagePath( entry.key );
+  QDir().mkpath( QFileInfo( cachedPath ).path() );
+
+  QImage previewImage( 24, 12, QImage::Format_ARGB32 );
+  previewImage.fill( QColor( 23, 111, 193 ) );
+  QVERIFY( previewImage.save( cachedPath ) );
+
+  const QgsNewsFeedParser parser2( url );
+  QCOMPARE( parser2.entries().count(), 1 );
+  QVERIFY( !parser2.entries().at( 0 ).image.isNull() );
+
+  const QgsNewsFeedModel model( const_cast< QgsNewsFeedParser * >( &parser2 ) );
+  QVERIFY( !qvariant_cast< QPixmap >( model.data( model.index( 0, 0, QModelIndex() ), Qt::DecorationRole ) ).isNull() );
+
+  QgsNewsFeedParser::sTreeNewsFeed->deleteItem( feedKey );
+  QFile::remove( cachedPath );
+}
+
+void TestQgsNewsFeedParser::testPersistedPreviewImageSurvivesRefetch()
+{
+  const QUrl url( QUrl::fromLocalFile( QStringLiteral( TEST_DATA_DIR ) + "/newsfeed/feed" ) );
+  const QString feedKey = QgsNewsFeedParser::keyForFeed( url.toString() );
+  QgsNewsFeedParser::sTreeNewsFeed->deleteItem( feedKey );
+
+  QgsNewsFeedParser parser( url );
+  QgsNewsFeedParser::Entry entry;
+  entry.key = 6;
+  entry.title = QStringLiteral( "QGIS core will be rewritten in Rust" );
+  entry.imageUrl = QStringLiteral( "http://0.0.0.0:8000/media/feedimages/rust.png" );
+  parser.storeEntryInSettings( entry );
+
+  const QString cachedPath = parser.cachedImagePath( entry.key );
+  QDir().mkpath( QFileInfo( cachedPath ).path() );
+
+  QImage previewImage( 24, 12, QImage::Format_ARGB32 );
+  previewImage.fill( QColor( 23, 111, 193 ) );
+  QVERIFY( previewImage.save( cachedPath ) );
+
+  const QgsNewsFeedParser parser2( url );
+  QVERIFY( parser2.entries().count() == 1 );
+  QVERIFY( !parser2.entries().at( 0 ).image.isNull() );
+
+  QgsNewsFeedParser parser3( url );
+  QEventLoop loop2;
+  connect( &parser3, &QgsNewsFeedParser::fetched, this, [=, &loop2]( const QList<QgsNewsFeedParser::Entry> & ) {
+    loop2.quit();
+  } );
+  QVERIFY( parser3.entries().count() == 1 );
+  QVERIFY( !parser3.entries().at( 0 ).image.isNull() );
+
+  parser3.fetch();
+  loop2.exec();
+
+  const auto entryIter = std::find_if( parser3.entries().begin(), parser3.entries().end(), []( const QgsNewsFeedParser::Entry &candidate )
+  {
+    return candidate.key == 6;
+  } );
+  QVERIFY( entryIter != parser3.entries().end() );
+  QVERIFY( !entryIter->image.isNull() );
+
+  QgsNewsFeedParser::sTreeNewsFeed->deleteItem( feedKey );
+  QFile::remove( cachedPath );
 }
 
 

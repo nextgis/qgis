@@ -22,6 +22,7 @@
 #include "qgsfocuskeeper.h"
 #include "qgssettings.h"
 #include "qgsgui.h"
+#include "qgsngutils.h"
 #include "qgsnative.h"
 #include "qgsstringutils.h"
 #include "qgsfileutils.h"
@@ -197,7 +198,8 @@ void QgsWelcomePage::setRecentProjects( const QList<QgsRecentProjectItemsModel::
 
 QString QgsWelcomePage::newsFeedUrl()
 {
-  return QStringLiteral( "" );
+  return QStringLiteral( "%1/wp-json/wp/v2/posts?per_page=10&orderby=date&order=desc&status=publish&_embed=wp:featuredmedia&_fields=id,date_gmt,link,title.rendered,excerpt.rendered,sticky,_links,_embedded.wp:featuredmedia.source_url,_embedded.wp:featuredmedia.media_type,_embedded.wp:featuredmedia.media_details" )
+    .arg( QgsNgUtils::nextgisDomain() );
 }
 
 QgsRecentProjectItemsModel *QgsWelcomePage::recentProjectsModel()

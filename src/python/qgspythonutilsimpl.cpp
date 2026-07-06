@@ -112,7 +112,7 @@ _ssr = StartupScriptRunner()
     globals(),
 )
 )"""" )
-               .arg( pythonPath() ),
+               .arg( pythonPath().replace( '\\', '/' ) ),
              QObject::tr( "Couldn't create run_startup_script." ), true );
   runString( QStringLiteral( "is_startup_script_executed = _ssr.run_startup_script(pyqgstart)" ) );
 
@@ -127,6 +127,13 @@ _ssr = StartupScriptRunner()
   // locally installed plugins have priority over the system plugins
   // use os.path.expanduser to support usernames with special characters (see #2512)
   QStringList pluginpaths;
+  auto pythonStringLiteral = []( QString path ) -> QString
+  {
+    path.replace( '\\', '/' );
+    path.replace( '"', "\\\"" );
+    return '"' + path + '"';
+  };
+
   const QStringList extraPaths = extraPluginsPaths();
   for ( const QString &path : extraPaths )
   {
@@ -138,22 +145,19 @@ _ssr = StartupScriptRunner()
       msg->setMessage( QObject::tr( "The extra plugin path '%1' does not exist!" ).arg( p ), QgsMessageOutput::MessageText );
       msg->showMessage();
     }
-#ifdef Q_OS_WIN
-    p.replace( '\\', "\\\\" );
-#endif
     // we store here paths in unicode strings
     // the str constant will contain utf8 code (through runString)
     // so we call '...'.decode('utf-8') to make a unicode string
-    pluginpaths << '"' + p + '"';
+    pluginpaths << pythonStringLiteral( p );
   }
   pluginpaths << homePluginsPath();
-  pluginpaths << '"' + pluginsPath() + '"';
-  pluginpaths << '"' + nextgisExtraPluginsPath() + '"';
+  pluginpaths << pythonStringLiteral( pluginsPath() );
+  pluginpaths << pythonStringLiteral( nextgisExtraPluginsPath() );
 
   // expect that bindings are installed locally, so add the path to modules
   // also add path to plugins
   QStringList newpaths;
-  newpaths << '"' + pythonPath() + '"';
+  newpaths << pythonStringLiteral( pythonPath() );
   newpaths << homePythonPath();
   newpaths << pluginpaths;
   runString( "sys.path = [" + newpaths.join( QLatin1Char( ',' ) ) + "] + sys.path" );
@@ -190,7 +194,7 @@ _ssr = StartupScriptRunner()
 
   // tell the utils script where to look for the plugins
   runString( QStringLiteral( "qgis.utils.plugin_paths = [%1]" ).arg( pluginpaths.join( ',' ) ) );
-  runString( QStringLiteral( "qgis.utils.sys_plugin_path = \"%1\"" ).arg( pluginsPath() ) );
+  runString( QStringLiteral( "qgis.utils.sys_plugin_path = %1" ).arg( pythonStringLiteral( pluginsPath() ) ) );
   runString( QStringLiteral( "qgis.utils.HOME_PLUGIN_PATH = %1" ).arg( homePluginsPath() ) ); // note - homePluginsPath() returns a python expression, not a string literal
 
 #ifdef Q_OS_WIN

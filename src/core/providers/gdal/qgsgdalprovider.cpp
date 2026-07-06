@@ -57,6 +57,9 @@
 #include <QDebug>
 #include <QRegularExpression>
 
+#include <cmath>
+#include <limits>
+
 #include <gdalwarper.h>
 #include <gdal.h>
 #include <ogr_srs_api.h>
@@ -342,7 +345,7 @@ bool QgsGdalProvider::cacheGdalHandlesForLaterReuse( QgsGdalProvider *provider,
     if ( iter == mgDatasetCache.end() || iter.value().isEmpty() )
     {
       QgsGdalProvider *candidateProvider = nullptr;
-      int nLargestCountOfCachedDatasets = 0;
+      qsizetype nLargestCountOfCachedDatasets = 0;
       for ( iter = mgDatasetCache.begin(); iter != mgDatasetCache.end(); ++iter )
       {
         if ( iter.value().size() > nLargestCountOfCachedDatasets )
@@ -871,6 +874,24 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
   }
 
   const size_t dataSize = static_cast<size_t>( dataTypeSize( bandNo ) );
+  const size_t bufferLineSpace = dataSize * static_cast<size_t>( bufferWidthPix );
+  if ( dataSize > static_cast<size_t>( std::numeric_limits<int>::max() ) ||
+       bufferLineSpace > static_cast<size_t>( std::numeric_limits<int>::max() ) ||
+       bufferLineSpace > static_cast<size_t>( std::numeric_limits<GSpacing>::max() ) )
+  {
+    QgsDebugError( QStringLiteral( "Raster block buffer layout exceeds GDAL RasterIO limits." ) );
+    return false;
+  }
+
+  const int gdalPixelSpace = static_cast<int>( dataSize );
+  const int gdalLineSpace = static_cast<int>( bufferLineSpace );
+  const GSpacing gdalPixelSpacing = static_cast<GSpacing>( dataSize );
+  const GSpacing gdalLineSpacing = static_cast<GSpacing>( bufferLineSpace );
+  const auto bufferOffset = [bufferWidthPix, dataSize]( int row, int column ) -> size_t
+  {
+    return ( static_cast<size_t>( row ) * static_cast<size_t>( bufferWidthPix ) +
+             static_cast<size_t>( column ) ) * dataSize;
+  };
 
   QgsRectangle intersectExtent = reqExtent.intersect( mExtent );
   if ( intersectExtent.isEmpty() )
@@ -950,9 +971,9 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
     if ( reqExtent.xMinimum() + tgtLeft * reqXRes < mExtent.xMinimum() )
     {
       if ( GDALRasterIO( gdalBand, GF_Read, 0, srcTop, 1, srcHeight,
-                         static_cast<char *>( data ) + tgtTopOri * bufferWidthPix * dataSize,
+                         static_cast<char *>( data ) + bufferOffset( tgtTopOri, 0 ),
                          1, tgtBottomOri - tgtTopOri + 1, type,
-                         dataSize, dataSize * bufferWidthPix ) != CE_None )
+                         gdalPixelSpace, gdalLineSpace ) != CE_None )
       {
         return false;
       }
@@ -961,9 +982,9 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
     if ( reqExtent.yMaximum() - tgtTop * reqYRes > mExtent.yMaximum() )
     {
       if ( GDALRasterIO( gdalBand, GF_Read, srcLeft, 0, srcWidth, 1,
-                         static_cast<char *>( data ) + tgtLeftOri * dataSize,
+                         static_cast<char *>( data ) + bufferOffset( 0, tgtLeftOri ),
                          tgtRightOri - tgtLeftOri + 1, 1, type,
-                         dataSize, dataSize * bufferWidthPix ) != CE_None )
+                         gdalPixelSpace, gdalLineSpace ) != CE_None )
       {
         return false;
       }
@@ -972,9 +993,9 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
     if ( reqExtent.xMinimum() + ( tgtRight + 1 ) * reqXRes > mExtent.xMaximum() )
     {
       if ( GDALRasterIO( gdalBand, GF_Read, xSize() - 1, srcTop, 1, srcHeight,
-                         static_cast<char *>( data ) + ( tgtTopOri * bufferWidthPix + tgtRightOri ) * dataSize,
+                         static_cast<char *>( data ) + bufferOffset( tgtTopOri, tgtRightOri ),
                          1, tgtBottomOri - tgtTopOri + 1, type,
-                         dataSize, dataSize * bufferWidthPix ) != CE_None )
+                         gdalPixelSpace, gdalLineSpace ) != CE_None )
       {
         return false;
       }
@@ -983,9 +1004,9 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
     if ( reqExtent.yMaximum() - ( tgtBottom + 1 ) * reqYRes < mExtent.yMinimum() )
     {
       if ( GDALRasterIO( gdalBand, GF_Read, srcLeft, ySize() - 1, srcWidth, 1,
-                         static_cast<char *>( data ) + ( tgtBottomOri * bufferWidthPix + tgtLeftOri ) * dataSize,
+                         static_cast<char *>( data ) + bufferOffset( tgtBottomOri, tgtLeftOri ),
                          tgtRightOri - tgtLeftOri + 1, 1, type,
-                         dataSize, dataSize * bufferWidthPix ) != CE_None )
+                         gdalPixelSpace, gdalLineSpace ) != CE_None )
       {
         return false;
       }
@@ -1043,12 +1064,12 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
                              std::max( 1, static_cast<int>( std::floor( sExtraArg.dfXSize ) ) ),
                              std::max( 1, static_cast<int>( std::floor( sExtraArg.dfYSize ) ) ),
                              static_cast<char *>( data ) +
-                             ( tgtTop * bufferWidthPix + tgtLeft ) * dataSize,
+                             bufferOffset( tgtTop, tgtLeft ),
                              tgtWidth,
                              tgtHeight,
                              type,
-                             dataSize,
-                             dataSize * bufferWidthPix,
+                             gdalPixelSpacing,
+                             gdalLineSpacing,
                              &sExtraArg ) == CE_None;
     }
   }
@@ -1065,8 +1086,8 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
     const int tgtWidth = tgtRightOri - tgtLeftOri + 1;
     const int tgtHeight = tgtBottomOri - tgtTopOri + 1;
 
-    const int tmpWidth = static_cast<int>( tgtWidth  * mMaxOversampling + 0.5 );
-    const int tmpHeight = static_cast<int>( tgtHeight * mMaxOversampling + 0.5 );
+    const int tmpWidth = static_cast<int>( std::lround( tgtWidth * mMaxOversampling ) );
+    const int tmpHeight = static_cast<int>( std::lround( tgtHeight * mMaxOversampling ) );
 
     // Allocate temporary block
     size_t bufferSize = dataSize * static_cast<size_t>( tmpWidth ) * static_cast<size_t>( tmpHeight );
@@ -1130,12 +1151,12 @@ bool QgsGdalProvider::readBlock( int bandNo, QgsRectangle  const &reqExtent, int
                           GF_Read,
                           0, 0, tmpWidth, tmpHeight,
                           static_cast<char *>( data ) +
-                          ( tgtTopOri * bufferWidthPix + tgtLeftOri ) * dataSize,
+                          bufferOffset( tgtTopOri, tgtLeftOri ),
                           tgtWidth,
                           tgtHeight,
                           type,
-                          dataSize,
-                          dataSize * bufferWidthPix,
+                          gdalPixelSpacing,
+                          gdalLineSpacing,
                           &sExtraArg );
     if ( err != CPLE_None )
     {
@@ -1868,7 +1889,7 @@ QList<QgsProviderSublayerDetails> QgsGdalProvider::sublayerDetails( GDALDatasetH
 
         // For GeoPackage, desc is often "table - identifier" where table=identifier
         // In that case, just keep one.
-        int sepIdx = layerDesc.indexOf( QLatin1String( " - " ) );
+        qsizetype sepIdx = layerDesc.indexOf( QLatin1String( " - " ) );
         if ( sepIdx > 0 )
         {
           layerName = layerDesc.left( sepIdx );
@@ -1911,7 +1932,7 @@ QList<QgsProviderSublayerDetails> QgsGdalProvider::sublayerDetails( GDALDatasetH
           sepIdx = layerName.indexOf( datasetPath + "\":" );
           if ( sepIdx >= 0 )
           {
-            layerName = layerName.mid( layerName.indexOf( datasetPath + "\":" ) + datasetPath.length() + 2 );
+            layerName = layerName.mid( sepIdx + datasetPath.length() + 2 );
           }
 
         }
@@ -2169,8 +2190,11 @@ QgsRasterHistogram QgsGdalProvider::histogram( int bandNo,
 
   for ( int myBin = 0; myBin < myHistogram.binCount; myBin++ )
   {
-    myHistogram.histogramVector.push_back( myHistogramArray[myBin] );
-    myHistogram.nonNullCount += myHistogramArray[myBin];
+    const GUIntBig histogramValue = myHistogramArray[myBin];
+    const int histogramBinValue = static_cast<int>( std::min<GUIntBig>( histogramValue, static_cast<GUIntBig>( std::numeric_limits<int>::max() ) ) );
+    const int nonNullIncrement = static_cast<int>( std::min<GUIntBig>( histogramValue, static_cast<GUIntBig>( std::numeric_limits<int>::max() - myHistogram.nonNullCount ) ) );
+    myHistogram.histogramVector.push_back( histogramBinValue );
+    myHistogram.nonNullCount += nonNullIncrement;
   }
 
   myHistogram.valid = true;
@@ -2339,7 +2363,7 @@ QString QgsGdalProvider::buildPyramids( const QList<QgsRasterPyramid> &rasterPyr
     QgsGdalProgress myProg;
     myProg.feedback = feedback;
     myError = GDALBuildOverviews( mGdalBaseDataset, method,
-                                  myOverviewLevelsVector.size(), myOverviewLevelsVector.data(),
+                                  static_cast<int>( myOverviewLevelsVector.size() ), myOverviewLevelsVector.data(),
                                   0, nullptr,
                                   progressCallback, &myProg ); //this is the arg for the gdal progress callback
 
@@ -2600,7 +2624,7 @@ QString QgsGdalProviderMetadata::encodeUri( const QVariantMap &parts ) const
 }
 
 
-static bool _parseGpkgColons( const QString &src, QString &filename, QString &tablename )
+static bool parseGpkgColons( const QString &src, QString &filename, QString &tablename )
 {
   // GDAL accepts the following input format:  GPKG:filename:table
   // (GDAL won't accept quoted filename)
@@ -2649,7 +2673,7 @@ QString QgsGdalProviderMetadata::absoluteToRelativeUri( const QString &uri, cons
   {
     // GPKG:filename:table
     QString filename, tablename;
-    if ( _parseGpkgColons( src, filename, tablename ) )
+    if ( parseGpkgColons( src, filename, tablename ) )
     {
       filename = context.pathResolver().writePath( filename );
       return QStringLiteral( "GPKG:%1:%2" ).arg( filename, tablename );
@@ -2721,7 +2745,7 @@ QString QgsGdalProviderMetadata::relativeToAbsoluteUri( const QString &uri, cons
   {
     // GPKG:filename:table
     QString filename, tablename;
-    if ( _parseGpkgColons( src, filename, tablename ) )
+    if ( parseGpkgColons( src, filename, tablename ) )
     {
       filename = context.pathResolver().readPath( filename );
       return QStringLiteral( "GPKG:%1:%2" ).arg( filename, tablename );
@@ -3166,7 +3190,7 @@ QgsRasterBandStats QgsGdalProvider::bandStatistics( int bandNo, Qgis::RasterBand
       | Qgis::RasterBandStatistic::Range | Qgis::RasterBandStatistic::Mean
       | Qgis::RasterBandStatistic::StdDev;
 
-  QgsDebugMsgLevel( QStringLiteral( "theStats = %1 supportedStats = %2" ).arg( stats, 0, 2 ).arg( supportedStats, 0, 2 ), 2 );
+  QgsDebugMsgLevel( QStringLiteral( "theStats = %1 supportedStats = %2" ).arg( qgsFlagValueToKeys( stats ) ).arg( qgsFlagValueToKeys( supportedStats ) ), 2 );
 
   if ( myRasterBandStats.extent != extent() ||
        ( stats & ( ~supportedStats ) ) )

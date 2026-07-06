@@ -26,8 +26,16 @@ ELSE(QSCINTILLA_VERSION_STR)
 
   if(BUILD_WITH_QT6)
     set(QSCINTILLA_PATH_SUFFIXES qt6)
+    set(QSCINTILLA_INCLUDE_PATHS
+      /usr/include/qt6
+      /usr/local/include/qt6
+    )
   else()
     set(QSCINTILLA_PATH_SUFFIXES qt)
+    set(QSCINTILLA_INCLUDE_PATHS
+      /usr/include/qt
+      /usr/local/include/qt
+    )
   endif()
   
   set(QSCINTILLA_LIBRARY_NAMES
@@ -61,11 +69,16 @@ ELSE(QSCINTILLA_VERSION_STR)
       "${_qsci_fw}/Headers"
       ${${QT_VERSION_BASE}Core_INCLUDE_DIRS}
       "${QT_INCLUDE_DIR}"
+      ${QSCINTILLA_INCLUDE_PATHS}
       $ENV{LIB_DIR}/include
       /usr/local/include
       /usr/include
     PATH_SUFFIXES ${QSCINTILLA_PATH_SUFFIXES}
     )
+
+  if(BUILD_WITH_QT6 AND QSCINTILLA_INCLUDE_DIR STREQUAL "/usr/include/qt" AND EXISTS "/usr/include/qt6/Qsci/qsciglobal.h")
+    set(QSCINTILLA_INCLUDE_DIR "/usr/include/qt6" CACHE PATH "where to find qextscintilla.h" FORCE)
+  endif()
 
   IF(QSCINTILLA_LIBRARY AND QSCINTILLA_INCLUDE_DIR)
     SET(QSCINTILLA_FOUND TRUE)

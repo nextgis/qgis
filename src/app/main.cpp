@@ -202,6 +202,17 @@ QString splashFilePath( const QString &basePath, const QString &fileName )
   return basePath + QLatin1Char( '/' ) + fileName;
 }
 
+QString defaultProfilesBasePath()
+{
+  const QString basePath = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
+  if ( basePath.isEmpty() )
+    return basePath;
+
+  const QFileInfo basePathInfo( basePath );
+  const QDir parentDirectory = basePathInfo.dir();
+  return parentDirectory.filePath( QStringLiteral( "NGQ%1" ).arg( Qgis::version().section( '.', 0, 0 ) ) );
+}
+
 QPixmap createSplashPixmap( const QString &splashPath )
 {
   QFile svgFile( splashFilePath( splashPath, QStringLiteral( "stable_splash.svg" ) ) );
@@ -1086,7 +1097,7 @@ int main( int argc, char *argv[] )
     // If it is still empty at this point we get it from the standard location.
     if ( configLocalStorageLocation.isEmpty() )
     {
-      configLocalStorageLocation = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
+      configLocalStorageLocation = defaultProfilesBasePath();
     }
   }
 

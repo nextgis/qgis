@@ -25,6 +25,8 @@
 #include "qgsfilterlineedit.h"
 
 #include <QComboBox>
+#include <QByteArray>
+#include <QUrl>
 
 QString QgsGdalGuiUtils::createDatabaseURI( const QString &connectionType, const QString &host, const QString &database, QString port, const QString &configId, QString username, QString password, bool expandAuthConfig )
 {
@@ -300,7 +302,12 @@ QString QgsGdalGuiUtils::createProtocolURI( const QString &type, const QString &
   }
   else if ( !( username.isEmpty() || password.isEmpty() ) )
   {
-    uri.replace( QLatin1String( "://" ), QStringLiteral( "://%1:%2@" ).arg( username, password ) );
+    const auto encodeUserInfoComponent = []( const QString &value )
+    {
+      static const QByteArray excludePercent = QByteArrayLiteral( "%" );
+      return QString::fromLatin1( QUrl::toPercentEncoding( value, excludePercent ) );
+    };
+    uri.replace( QLatin1String( "://" ), QStringLiteral( "://%1:%2@" ).arg( encodeUserInfoComponent( username ), encodeUserInfoComponent( password ) ) );
   }
   return uri;
 }

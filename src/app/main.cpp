@@ -36,6 +36,8 @@
 #include <QStandardPaths>
 #include <QScreen>
 #include <QSurfaceFormat>
+#include <QPainter>
+#include <QSvgRenderer>
 
 #include <cstdio>
 #include <cstdlib>
@@ -188,6 +190,50 @@ void usage( const QString &appName )
 #endif
 
 } // usage()
+
+namespace
+{
+
+QString splashFilePath( const QString &basePath, const QString &fileName )
+{
+  if ( basePath.endsWith( QLatin1Char( '/' ) ) )
+    return basePath + fileName;
+
+  return basePath + QLatin1Char( '/' ) + fileName;
+}
+
+QPixmap createSplashPixmap( const QString &splashPath )
+{
+  QFile svgFile( splashFilePath( splashPath, QStringLiteral( "stable_splash.svg" ) ) );
+  if ( svgFile.open( QIODevice::ReadOnly ) )
+  {
+    QString svgContent = QString::fromUtf8( svgFile.readAll() );
+    svgContent.replace( QStringLiteral( "{{stability}}" ), QObject::tr( "Stable version" ).toHtmlEscaped() );
+
+    const QString versionInfo = QObject::tr( "v%1 | based on QGIS %2" )
+                                .arg( QString::fromUtf8( NEXTGIS_QGIS_VERSION ), Qgis::version().section( '-', 0, 0 ) );
+    svgContent.replace( QStringLiteral( "{{version_info}}" ), versionInfo.toHtmlEscaped() );
+
+    QSvgRenderer svgRenderer( svgContent.toUtf8() );
+    if ( svgRenderer.isValid() )
+    {
+      QSize splashSize = svgRenderer.defaultSize();
+      if ( splashSize.isEmpty() )
+        splashSize = QSize( 750, 350 );
+
+      QPixmap pixmap( splashSize );
+      pixmap.fill( Qt::transparent );
+
+      QPainter painter( &pixmap );
+      svgRenderer.render( &painter );
+      return pixmap;
+    }
+  }
+
+  return QPixmap( splashFilePath( splashPath, QStringLiteral( "splash.png" ) ) );
+}
+
+}
 
 
 /////////////////////////////////////////////////////////////////
@@ -1505,15 +1551,15 @@ int main( int argc, char *argv[] )
 
   //set up splash screen
   QString splashPath( QgsCustomization::instance()->splashPath() );
-  QPixmap pixmap( splashPath + QStringLiteral( "splash.png" ) );
+  QPixmap pixmap( createSplashPixmap( splashPath ) );
 
   if ( QScreen *screen = QGuiApplication::primaryScreen() )
   {
     pixmap.setDevicePixelRatio( screen->devicePixelRatio() );
   }
 
-  int w = 749 * pixmap.devicePixelRatioF();
-  int h = 356 * pixmap.devicePixelRatioF();
+  int w = 750 * pixmap.devicePixelRatioF();
+  int h = 350 * pixmap.devicePixelRatioF();
 
   QSplashScreen *mypSplash = new QSplashScreen( pixmap.scaled( w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation ) );
 

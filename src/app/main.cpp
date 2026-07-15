@@ -23,8 +23,10 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QFontDatabase>
+#include <QFontMetricsF>
 #include <QPixmap>
 #include <QLocale>
+#include <QRegularExpression>
 #include <QSplashScreen>
 #include <QString>
 #include <QStringList>
@@ -42,6 +44,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
+#include <cmath>
 #include "qgsconfig.h"
 
 #if !defined( Q_OS_WIN )
@@ -213,13 +216,65 @@ QString defaultProfilesBasePath()
   return parentDirectory.filePath( QStringLiteral( "NGQ%1" ).arg( Qgis::version().section( '.', 0, 0 ) ) );
 }
 
-QPixmap createSplashPixmap( const QString &splashPath )
+QString formatSvgNumber( const qreal value )
+{
+  QString number = QString::number( value, 'f', 2 );
+
+  while ( number.contains( QLatin1Char( '.' ) ) && number.endsWith( QLatin1Char( '0' ) ) )
+    number.chop( 1 );
+
+  if ( number.endsWith( QLatin1Char( '.' ) ) )
+    number.chop( 1 );
+
+  return number;
+}
+
+void replaceSvgElementAttribute( QString &svgContent, const QString &elementName, const QString &elementId, const QString &attributeName, const QString &attributeValue )
+{
+  const QRegularExpression attributeExpression(
+    QStringLiteral( R"((<%1\b(?=[^>]*\bid="%2")[^>]*\b%3=")([^"]*)("))" )
+    .arg( QRegularExpression::escape( elementName ),
+          QRegularExpression::escape( elementId ),
+          QRegularExpression::escape( attributeName ) ) );
+  svgContent.replace( attributeExpression, QStringLiteral( "\\1%1\\3" ).arg( attributeValue ) );
+}
+
+void updateStabilityBadge( QString &svgContent, const QString &stabilityText )
+{
+  constexpr qreal badgeX = 74.0;
+  constexpr qreal badgeY = 203.0;
+  constexpr qreal badgeHeight = 38.0;
+  constexpr qreal textX = 126.0;
+  constexpr qreal rightPadding = 20.0;
+
+  QFont badgeFont( QStringLiteral( "Inter" ) );
+  badgeFont.setPixelSize( 17 );
+  badgeFont.setWeight( QFont::Normal );
+
+  const QFontMetricsF badgeFontMetrics( badgeFont );
+  const qreal textWidth = badgeFontMetrics.horizontalAdvance( stabilityText );
+  const qreal textBaselineY = badgeY + ( badgeHeight - badgeFontMetrics.height() ) / 2.0 + badgeFontMetrics.ascent();
+  const qreal badgeWidth = textX - badgeX + textWidth + rightPadding;
+
+  const QString svgTextX = formatSvgNumber( textX );
+  const QString svgTextBaselineY = formatSvgNumber( textBaselineY );
+
+  replaceSvgElementAttribute( svgContent, QStringLiteral( "rect" ), QStringLiteral( "rect24" ), QStringLiteral( "width" ), formatSvgNumber( badgeWidth ) );
+  replaceSvgElementAttribute( svgContent, QStringLiteral( "text" ), QStringLiteral( "text24" ), QStringLiteral( "x" ), svgTextX );
+  replaceSvgElementAttribute( svgContent, QStringLiteral( "text" ), QStringLiteral( "text24" ), QStringLiteral( "y" ), svgTextBaselineY );
+  replaceSvgElementAttribute( svgContent, QStringLiteral( "tspan" ), QStringLiteral( "tspan24" ), QStringLiteral( "x" ), svgTextX );
+  replaceSvgElementAttribute( svgContent, QStringLiteral( "tspan" ), QStringLiteral( "tspan24" ), QStringLiteral( "y" ), svgTextBaselineY );
+}
+
+QPixmap createSplashPixmap( const QString &splashPath, const qreal devicePixelRatio )
 {
   QFile svgFile( splashFilePath( splashPath, QStringLiteral( "stable_splash.svg" ) ) );
   if ( svgFile.open( QIODevice::ReadOnly ) )
   {
     QString svgContent = QString::fromUtf8( svgFile.readAll() );
-    svgContent.replace( QStringLiteral( "{{stability}}" ), QObject::tr( "Stable version" ).toHtmlEscaped() );
+    const QString stabilityText = QObject::tr( "Stable version" );
+    svgContent.replace( QStringLiteral( "{{stability}}" ), stabilityText.toHtmlEscaped() );
+    updateStabilityBadge( svgContent, stabilityText );
 
     const QString versionInfo = QObject::tr( "v%1 | based on QGIS %2" )
                                 .arg( QString::fromUtf8( NEXTGIS_QGIS_VERSION ), Qgis::version().section( '-', 0, 0 ) );
@@ -232,11 +287,16 @@ QPixmap createSplashPixmap( const QString &splashPath )
       if ( splashSize.isEmpty() )
         splashSize = QSize( 750, 350 );
 
-      QPixmap pixmap( splashSize );
+      const QSize renderSize( std::ceil( splashSize.width() * devicePixelRatio ), std::ceil( splashSize.height() * devicePixelRatio ) );
+      QPixmap pixmap( renderSize );
       pixmap.fill( Qt::transparent );
+      pixmap.setDevicePixelRatio( devicePixelRatio );
 
       QPainter painter( &pixmap );
-      svgRenderer.render( &painter );
+      painter.setRenderHint( QPainter::Antialiasing, true );
+      painter.setRenderHint( QPainter::TextAntialiasing, true );
+      painter.setRenderHint( QPainter::SmoothPixmapTransform, true );
+      svgRenderer.render( &painter, QRectF( QPointF( 0, 0 ), QSizeF( splashSize ) ) );
       return pixmap;
     }
   }
@@ -1562,17 +1622,14 @@ int main( int argc, char *argv[] )
 
   //set up splash screen
   QString splashPath( QgsCustomization::instance()->splashPath() );
-  QPixmap pixmap( createSplashPixmap( splashPath ) );
-
+  qreal splashDevicePixelRatio = 1.0;
   if ( QScreen *screen = QGuiApplication::primaryScreen() )
   {
-    pixmap.setDevicePixelRatio( screen->devicePixelRatio() );
+    splashDevicePixelRatio = screen->devicePixelRatio();
   }
+  QPixmap pixmap( createSplashPixmap( splashPath, splashDevicePixelRatio ) );
 
-  int w = 750 * pixmap.devicePixelRatioF();
-  int h = 350 * pixmap.devicePixelRatioF();
-
-  QSplashScreen *mypSplash = new QSplashScreen( pixmap.scaled( w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation ) );
+  QSplashScreen *mypSplash = new QSplashScreen( pixmap );
 
   // Force splash screen to start on primary screen
   if ( QScreen *screen = QGuiApplication::primaryScreen() )

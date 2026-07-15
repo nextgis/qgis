@@ -61,6 +61,7 @@ from qgis.utils import (
     plugins_metadata_parser,
     isPluginLoaded,
     HOME_PLUGIN_PATH,
+    _unloadPluginModules,
 )
 from .installer_data import repositories, plugins, officialRepo, reposGroup, removeDir
 from .qgsplugininstallerinstallingdialog import QgsPluginInstallerInstallingDialog
@@ -399,6 +400,8 @@ class QgsPluginInstaller(QObject):
         pluginWasLoaded = isPluginLoaded(plugin["id"])
         if pluginWasLoaded:
             unloadPlugin(plugin["id"])
+        else:
+            _unloadPluginModules(plugin["id"])
 
         dlg = QgsPluginInstallerInstallingDialog(
             iface.mainWindow(), plugin, stable=stable
@@ -804,6 +807,8 @@ class QgsPluginInstaller(QObject):
         # if plugin is active, unload it before update, see https://github.com/qgis/QGIS/issues/54968
         if isPluginLoaded(pluginName):
             unloadPlugin(pluginName)
+        else:
+            _unloadPluginModules(pluginName)
 
         # If the target directory already exists as a link,
         # remove the link without resolving

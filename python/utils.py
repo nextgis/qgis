@@ -435,6 +435,9 @@ def pluginMetadata(packageName: str, fct: str) -> str:
 def loadPlugin(packageName: str) -> bool:
     """load plugin's package"""
 
+    _unloadPluginModules(packageName)
+    sys.path_importer_cache.clear()
+
     try:
         __import__(packageName)
         return True
@@ -637,17 +640,16 @@ def unloadPlugin(packageName: str) -> bool:
     """unload and delete plugin!"""
     global plugins, active_plugins
 
-    if packageName not in plugins:
-        return False
-    if packageName not in active_plugins:
+    if packageName not in plugins or packageName not in active_plugins:
+        _unloadPluginModules(packageName)
         return False
 
+    unloaded = False
     try:
         plugins[packageName].unload()
         del plugins[packageName]
         active_plugins.remove(packageName)
-        _unloadPluginModules(packageName)
-        return True
+        unloaded = True
     except Exception as e:
         msg = QCoreApplication.translate(
             "Python", "Error while unloading plugin {0}"
@@ -659,19 +661,26 @@ def unloadPlugin(packageName: str) -> bool:
             msg,
             messagebar=True,
         )
-        return False
+    finally:
+        _unloadPluginModules(packageName)
+    return unloaded
 
 
 def _unloadPluginModules(packageName: str):
     """unload plugin package with all its modules (files)"""
     global _plugin_modules
 
-    if packageName not in _plugin_modules:
-        return
+    mods = set()
+    if packageName in _plugin_modules:
+        mods = set(_plugin_modules[packageName])
+        del _plugin_modules[packageName]
 
-    mods = _plugin_modules[packageName]
+    prefix = packageName + "."
+    for mod in list(sys.modules):
+        if mod == packageName or mod.startswith(prefix):
+            mods.add(mod)
 
-    for mod in mods:
+    for mod in sorted(mods, key=lambda name: -name.count(".")):
         if mod not in sys.modules:
             continue
 
@@ -687,20 +696,21 @@ def _unloadPluginModules(packageName: str):
 
         # try removing path
         if hasattr(sys.modules[mod], "__path__"):
-            for path in sys.modules[mod].__path__:
-                try:
-                    sys.path.remove(path)
-                except ValueError:
-                    # Discard if path is not there
-                    pass
+            try:
+                for path in sys.modules[mod].__path__:
+                    try:
+                        sys.path.remove(path)
+                    except ValueError:
+                        # Discard if path is not there
+                        pass
+            except (KeyError, ValueError, AttributeError):
+                pass
 
         # try to remove the module from python
         try:
             del sys.modules[mod]
         except:
             qDebug("Error when removing module:\n%s" % traceback.format_exc())
-    # remove the plugin entry
-    del _plugin_modules[packageName]
 
 
 def isPluginLoaded(packageName: str) -> bool:
@@ -1101,7 +1111,9 @@ def _import(name, globals={}, locals={}, fromlist=[], level=None):
 
     mod = _builtin_import(name, globals, locals, fromlist, level)
 
-    if mod and getattr(mod, "__file__", None):
+    if mod and (
+        getattr(mod, "__file__", None) or getattr(mod, "__path__", None)
+    ):
         module_name = mod.__name__ if fromlist else name
         package_name = module_name.split(".")[0]
         # check whether the module belongs to one of our plugins

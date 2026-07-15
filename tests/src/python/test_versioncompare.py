@@ -14,7 +14,8 @@ test_versioncompare.py
  ***************************************************************************/
 """
 
-from pyplugin_installer.version_compare import compareVersions
+from pyplugin_installer.version_compare import compareVersions, isCompatible, pyPythonVersion
+import sys
 import unittest
 from qgis.testing import start_app, QgisTestCase
 
@@ -109,6 +110,27 @@ class TestVersionCompare(QgisTestCase):
         a = "1.0a1"
         b = "1.0.0alpha1"
         self.assertEqual(compareVersions(a, b), 0)
+
+    def testPythonVersion(self):
+        self.assertEqual(
+            pyPythonVersion(),
+            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        )
+
+    def testPythonVersionCompatibility(self):
+        current_version = pyPythonVersion()
+        current_major = sys.version_info.major
+        current_minor = sys.version_info.minor
+
+        self.assertTrue(
+            isCompatible(
+                current_version,
+                f"{current_major}.{current_minor}",
+                f"{current_major}.99",
+            )
+        )
+        self.assertFalse(isCompatible(current_version, "99.0", "99.99"))
+        self.assertFalse(isCompatible(current_version, "0.0", "2.99"))
 
 
 if __name__ == "__main__":

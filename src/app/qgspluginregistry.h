@@ -110,6 +110,12 @@ class APP_EXPORT QgsPluginRegistry
      */
     bool checkQgisVersion( const QString &minVersion, const QString &maxVersion = QString() ) const;
 
+    /**
+     * Check current Python version against requested minimal and optionally maximal Python version
+     * if maxVersion not specified, the default value is assumed: std::floor(minVersion) + 0.99.99
+     */
+    bool checkPythonVersion( const QString &minVersion, const QString &maxVersion = QString() ) const;
+
   private:
     static QgsPluginRegistry *sInstance;
     QMap<QString, QgsPluginMetadata> mPlugins;

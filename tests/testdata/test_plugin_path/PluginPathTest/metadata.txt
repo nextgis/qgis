@@ -1,6 +1,9 @@
 [general]
 name=plugin path test
 qgisMinimumVersion=2.0
+qgisMaximumVersion=99.99
+pythonMinimumVersion=3.0
+pythonMaximumVersion=3.99
 description=desc
 version=0.1
 author=HM/Oslandia

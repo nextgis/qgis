@@ -1,3 +1,4 @@
+add_subdirectory(../external/libdxfrw external/libdxfrw)
 add_subdirectory(core)
 
 if (WITH_AUTH)

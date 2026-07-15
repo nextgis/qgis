@@ -666,6 +666,8 @@ set(QGIS_CORE_SRCS
   browser/qgsrelationshipsitem.cpp
   browser/qgszipitem.cpp
 
+  dwg/qgsdwgimporter.cpp
+
   dxf/qgsdxfexport.cpp
   dxf/qgsdxfpaintdevice.cpp
   dxf/qgsdxfpaintengine.cpp
@@ -2157,6 +2159,8 @@ set(QGIS_CORE_PRIVATE_HDRS
   qgsrelation_p.h
   qgsspatialindexkdbush_p.h
 
+  dwg/qgsdwgimporter.h
+
   dxf/qgsdxfexport_p.h
 
   editform/qgseditformconfig_p.h
@@ -2490,6 +2494,7 @@ target_include_directories(qgis_core PUBLIC
   callouts
   classification
   diagram
+  dwg
   dxf
   editform
   effects
@@ -2660,6 +2665,7 @@ target_link_libraries(qgis_core
   ${EXIV2_LIBRARY}
   PROJ::proj
   nlohmann_json::nlohmann_json
+  libdxfrw
 )
 
 if(NOT WITH_INTERNAL_SPATIALINDEX)

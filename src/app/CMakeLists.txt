@@ -1,4 +1,3 @@
-add_subdirectory(../../external/libdxfrw dwg/libdxfrw)
 if(NOT WIN32)
 SUBDIRS(${CMAKE_SOURCE_DIR}/external/qt-unix-signals)
 endif()
@@ -189,7 +188,6 @@ set(QGIS_APP_SRCS
   devtools/querylogger/qgsqueryloggerwidgetfactory.cpp
 
   dwg/qgsdwgimportdialog.cpp
-  dwg/qgsdwgimporter.cpp
 
   elevation/qgselevationprofileexportsettingswidget.cpp
   elevation/qgselevationprofileimageexportdialog.cpp

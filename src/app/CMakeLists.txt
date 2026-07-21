@@ -7,6 +7,7 @@ set(NG_APP_SRCS
   ngsaboutdialog.cpp
   ngcustomization.cpp
   ngupdater.cpp
+  ngversion.cpp
   options/ngauthoptions.cpp
 )
 

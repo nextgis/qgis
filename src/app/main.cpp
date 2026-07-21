@@ -44,7 +44,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
-#include <cmath>
+#include "ngversion.h"
 #include "qgsconfig.h"
 
 #if !defined( Q_OS_WIN )
@@ -137,7 +137,7 @@ void usage( const QString &appName )
   QStringList msg;
 
   msg
-    << QStringLiteral( NEXTGIS ) << QStringLiteral( " QGIS - " ) << QStringLiteral( NEXTGIS_QGIS_VERSION ) << QStringLiteral( " (" ) << QStringLiteral( VERSION ) << QStringLiteral( ")\n" )
+    << QStringLiteral( NEXTGIS ) << QStringLiteral( " QGIS - " ) << NgVersion::nextgisQgisVersion() << QStringLiteral( " (" ) << QStringLiteral( VERSION ) << QStringLiteral( ")\n" )
     << QStringLiteral( NEXTGIS ) << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
     << QStringLiteral( "Usage: " ) << appName << QStringLiteral( " [OPTION] [FILE]\n" )
     << QStringLiteral( "  OPTION:\n" )

@@ -205,6 +205,8 @@
 #include "qgisapp.h"
 #include "moc_qgisapp.cpp"
 #include "qgisappinterface.h"
+#include "ngsplashscreenrenderer.h"
+#include "ngversion.h"
 #include "qgisappstylesheet.h"
 #include "qgis.h"
 #include "qgsabout.h"
@@ -984,7 +986,7 @@ QgisApp::QgisApp( QSplashScreen *splash, AppOptions options, const QString &root
   sInstance = this;
   QgsRuntimeProfiler *profiler = QgsApplication::profiler();
 
-  QColor splashTextColor = Qgis::releaseName() == QLatin1String( "Master" ) ? QColor( 93, 153, 51 ) : Qt::black;
+  QColor splashTextColor = NgSplashScreenRenderer::statusTextColor();
 
   startProfile( tr( "Create user profile manager" ) );
   mUserProfileManager = new QgsUserProfileManager( QString(), this );
@@ -5485,7 +5487,9 @@ QString QgisApp::getVersionString()
   const QString compLabel = tr( "Compiled" );
   const QString runLabel = tr( "Running" );
 
-  versionString += QStringLiteral( "<tr><td>%1</td><td>%2</td>" ).arg( tr( "QGIS version" ), Qgis::version() );
+  versionString += QStringLiteral( "<tr><td>%1</td><td>%2</td>" ).arg( tr( "NextGIS QGIS version" ), NgVersion::nextgisQgisVersion() );
+  versionString += QLatin1String( "</tr><tr>" );
+  versionString += QStringLiteral( "<td>%1</td><td>%2</td>" ).arg( tr( "QGIS version" ), Qgis::version() );
   versionString += QLatin1String( "</tr><tr>" );
   if ( QString( Qgis::devVersion() ) == QLatin1String( "exported" ) )
   {
@@ -5895,6 +5899,26 @@ bool QgisApp::fileNewFromTemplate( const QString &fileName )
     return true;
   }
   return false;
+}
+
+bool QgisApp::fileNewWithBasemap()
+{
+  if ( checkTasksDependOnProject() )
+    return false;
+
+  if ( !checkUnsavedLayerEdits() || !checkMemoryLayers() || !saveDirty() || !checkUnsavedRasterAttributeTableEdits() )
+  {
+    return false; //cancel pressed
+  }
+
+  MAYBE_UNUSED QgsProjectDirtyBlocker dirtyBlocker( QgsProject::instance() );
+  QgsProject::instance()->clear();
+
+  QgsRasterLayer *basemapLayer = new QgsRasterLayer( QStringLiteral( "type=xyz&tilePixelRatio=1&url=https://tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=19&zmin=0&crs=EPSG3857" ), QStringLiteral( "OpenStreetMap" ), QLatin1String( "wms" ) );
+  QgsProject::instance()->setCrs( basemapLayer->crs() );
+  QgsProject::instance()->addMapLayers( QList<QgsMapLayer *>() << basemapLayer );
+
+  return true;
 }
 
 void QgisApp::fileNewFromDefaultTemplate()

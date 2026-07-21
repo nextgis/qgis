@@ -284,7 +284,7 @@ void QgsStatusBarCoordinatesWidget::world()
   {
     return;
   }
-  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=countries" );
+  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=world_map" );
   const QFileInfo fileInfo = QFileInfo( fileName );
   QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() };
   options.forceReadOnly = true;
@@ -313,7 +313,7 @@ void QgsStatusBarCoordinatesWidget::userGroups()
   {
     return;
   }
-  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=countries" );
+  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=world_map" );
   const QFileInfo fileInfo = QFileInfo( fileName );
   const QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() };
   QgsVectorLayer *layer = new QgsVectorLayer( fileInfo.absoluteFilePath(), tr( "User Groups" ), QStringLiteral( "ogr" ), options );

@@ -61,7 +61,7 @@ void TestQgs3DMapScene::initTestCase()
 
   mProject = std::make_unique<QgsProject>();
 
-  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=countries" );
+  const QString fileName = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=world_map" );
 
   mLayerCountries = new QgsVectorLayer( fileName, QStringLiteral( "world" ), QStringLiteral( "ogr" ) );
   QVERIFY( mLayerCountries->isValid() );

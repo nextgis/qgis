@@ -35,7 +35,7 @@ QgsCoordinateBoundsPreviewMapWidget::QgsCoordinateBoundsPreviewMapWidget( QWidge
   const QgsCoordinateReferenceSystem srs( QStringLiteral( "EPSG:4326" ) );
   setDestinationCrs( srs );
 
-  const QString layerPath = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=countries" );
+  const QString layerPath = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=world_map" );
   QgsVectorLayer::LayerOptions options;
   options.forceReadOnly = true;
   mLayers << new QgsVectorLayer( layerPath, tr( "World Map" ), QStringLiteral( "ogr" ), options );

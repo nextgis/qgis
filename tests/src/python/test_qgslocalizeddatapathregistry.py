@@ -98,7 +98,7 @@ class TestQgsLocalizedDataPathRegistry(QgisTestCase):
         with open(fh.name) as fh:
             for line in fh:
                 if (
-                    "<datasource>localized:data/world_map.gpkg|layername=countries</datasource>"
+                    "<datasource>localized:data/world_map.gpkg|layername=world_map</datasource>"
                     in line
                 ):
                     found = True

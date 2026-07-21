@@ -306,21 +306,20 @@ void QgsNewsFeedParser::fetchImageForEntry( const QgsNewsFeedParser::Entry &entr
       }
 
       QSize size = img.size();
-      bool resize = false;
-      if ( size.width() > 250 )
+      constexpr int maxPreviewWidth = 250;
+      constexpr int maxPreviewHeight = 144;
+      if ( size.width() > maxPreviewWidth )
       {
-        size.setHeight( static_cast< int >( size.height() * static_cast< double >( 250 ) / size.width() ) );
-        size.setWidth( 250 );
-        resize = true;
+        size.setHeight( static_cast< int >( size.height() * static_cast< double >( maxPreviewWidth ) / size.width() ) );
+        size.setWidth( maxPreviewWidth );
       }
-      if ( size.height() > 177 )
+      if ( size.height() > maxPreviewHeight )
       {
-        size.setWidth( static_cast< int >( size.width() * static_cast< double >( 177 ) / size.height() ) );
-        size.setHeight( 177 );
-        resize = true;
+        size.setWidth( static_cast< int >( size.width() * static_cast< double >( maxPreviewHeight ) / size.height() ) );
+        size.setHeight( maxPreviewHeight );
       }
-      if ( resize )
-        img = img.scaled( size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation );
+      if ( size != img.size() )
+        img = img.scaled( size, Qt::KeepAspectRatio, Qt::SmoothTransformation );
 
       //nicely round corners so users don't get paper cuts
       QImage previewImage( size, QImage::Format_ARGB32 );

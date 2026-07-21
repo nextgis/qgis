@@ -42,6 +42,7 @@
 #include <QDesktopServices>
 #include <QTextBrowser>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QSplitter>
 #include <QRegularExpression>
 #include <QUrl>
@@ -106,6 +107,7 @@ QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
     mNewsDelegate = new QgsNewsItemListItemDelegate( mNewsFeedListView );
     mNewsFeedListView->setItemDelegate( mNewsDelegate );
     mNewsFeedListView->setContextMenuPolicy( Qt::CustomContextMenu );
+    mNewsFeedListView->viewport()->setMouseTracking( true );
     mNewsFeedListView->viewport()->installEventFilter( this );
     connect( mNewsFeedListView, &QAbstractItemView::doubleClicked, this, &QgsWelcomePage::newsItemActivated );
     connect( mNewsFeedListView, &QAbstractItemView::activated, this, &QgsWelcomePage::newsItemActivated );
@@ -134,6 +136,8 @@ QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
   templateProjectsDelegate->setShowPath( false );
   mTemplateProjectsListView->setItemDelegate( templateProjectsDelegate );
   mTemplateProjectsListView->setContextMenuPolicy( Qt::CustomContextMenu );
+  mTemplateProjectsListView->viewport()->setMouseTracking( true );
+  mTemplateProjectsListView->viewport()->installEventFilter( this );
   connect( mTemplateProjectsListView, &QListView::customContextMenuRequested, this, &QgsWelcomePage::showContextMenuForTemplates );
   templateLayout->addWidget( mTemplateProjectsListView, 1 );
   templateContainer->setLayout( templateLayout );
@@ -439,21 +443,51 @@ void QgsWelcomePage::updateNewsFeedVisibility()
 
 bool QgsWelcomePage::eventFilter( QObject *obj, QEvent *event )
 {
-  if ( obj == mNewsFeedListView->viewport() && event->type() == QEvent::MouseButtonRelease )
+  if ( mNewsFeedListView && obj == mNewsFeedListView->viewport() )
   {
-    QMouseEvent *mouseEvent = qgis::down_cast<QMouseEvent *>( event );
-    if ( mouseEvent->button() == Qt::LeftButton )
+    if ( event->type() == QEvent::MouseMove )
     {
-      const QModelIndex index = mNewsFeedListView->indexAt( mouseEvent->pos() );
-      if ( index.isValid() )
+      QMouseEvent *mouseEvent = qgis::down_cast<QMouseEvent *>( event );
+      if ( mNewsFeedListView->indexAt( mouseEvent->pos() ).isValid() )
+        mNewsFeedListView->viewport()->setCursor( Qt::PointingHandCursor );
+      else
+        mNewsFeedListView->viewport()->unsetCursor();
+    }
+    else if ( event->type() == QEvent::Leave )
+    {
+      mNewsFeedListView->viewport()->unsetCursor();
+    }
+    else if ( event->type() == QEvent::MouseButtonRelease )
+    {
+      QMouseEvent *mouseEvent = qgis::down_cast<QMouseEvent *>( event );
+      if ( mouseEvent->button() == Qt::LeftButton )
       {
-        const QPoint itemClickPoint = mouseEvent->pos() - mNewsFeedListView->visualRect( index ).topLeft();
-        if ( QRect( mNewsDelegate->dismissRect().left(), mNewsDelegate->dismissRect().top(), mNewsDelegate->dismissRectSize().width(), mNewsDelegate->dismissRectSize().height() ).contains( itemClickPoint ) )
+        const QModelIndex index = mNewsFeedListView->indexAt( mouseEvent->pos() );
+        if ( index.isValid() )
         {
-          mNewsFeedParser->dismissEntry( index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Key ) ).toInt() );
+          const QPoint itemClickPoint = mouseEvent->pos() - mNewsFeedListView->visualRect( index ).topLeft();
+          if ( QRect( mNewsDelegate->dismissRect().left(), mNewsDelegate->dismissRect().top(), mNewsDelegate->dismissRectSize().width(), mNewsDelegate->dismissRectSize().height() ).contains( itemClickPoint ) )
+          {
+            mNewsFeedParser->dismissEntry( index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Key ) ).toInt() );
+          }
+          return true;
         }
-        return true;
       }
+    }
+  }
+  else if ( mTemplateProjectsListView && obj == mTemplateProjectsListView->viewport() )
+  {
+    if ( event->type() == QEvent::MouseMove )
+    {
+      QMouseEvent *mouseEvent = qgis::down_cast<QMouseEvent *>( event );
+      if ( mTemplateProjectsListView->indexAt( mouseEvent->pos() ).isValid() )
+        mTemplateProjectsListView->viewport()->setCursor( Qt::PointingHandCursor );
+      else
+        mTemplateProjectsListView->viewport()->unsetCursor();
+    }
+    else if ( event->type() == QEvent::Leave )
+    {
+      mTemplateProjectsListView->viewport()->unsetCursor();
     }
   }
 

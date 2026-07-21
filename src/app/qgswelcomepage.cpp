@@ -218,10 +218,23 @@ void QgsWelcomePage::recentProjectItemActivated( const QModelIndex &index )
 
 void QgsWelcomePage::templateProjectItemActivated( const QModelIndex &index )
 {
-  if ( !index.data( QgsProjectListItemDelegate::NativePathRole ).isValid() )
-    QgisApp::instance()->newProject();
-  else
-    QgisApp::instance()->fileNewFromTemplate( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );
+  const QgsTemplateProjectsModel::TemplateType type = static_cast<QgsTemplateProjectsModel::TemplateType>(
+    index.data( static_cast<int>( QgsTemplateProjectsModel::CustomRole::TypeRole ) ).toInt() );
+
+  switch ( type )
+  {
+    case QgsTemplateProjectsModel::TemplateType::Blank:
+      QgisApp::instance()->newProject();
+      break;
+
+    case QgsTemplateProjectsModel::TemplateType::OpenStreetMap:
+      QgisApp::instance()->fileNewWithBasemap();
+      break;
+
+    case QgsTemplateProjectsModel::TemplateType::File:
+      QgisApp::instance()->fileNewFromTemplate( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );
+      break;
+  }
 }
 
 void QgsWelcomePage::newsItemActivated( const QModelIndex &index )
@@ -354,6 +367,9 @@ void QgsWelcomePage::showContextMenuForTemplates( QPoint point )
 {
   const QModelIndex index = mTemplateProjectsListView->indexAt( point );
   if ( !index.isValid() )
+    return;
+
+  if ( static_cast<QgsTemplateProjectsModel::TemplateType>( index.data( static_cast<int>( QgsTemplateProjectsModel::CustomRole::TypeRole ) ).toInt() ) != QgsTemplateProjectsModel::TemplateType::File )
     return;
 
   const QFileInfo fileInfo( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );

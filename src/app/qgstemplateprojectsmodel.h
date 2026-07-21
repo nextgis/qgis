@@ -25,6 +25,20 @@ class QgsTemplateProjectsModel : public QStandardItemModel
     Q_OBJECT
 
   public:
+    enum class TemplateType : int
+    {
+      Blank,
+      OpenStreetMap,
+      File,
+    };
+    Q_ENUM( TemplateType )
+
+    enum class CustomRole : int
+    {
+      TypeRole = Qt::UserRole + 100,
+    };
+    Q_ENUM( CustomRole )
+
     QgsTemplateProjectsModel( QObject *parent = nullptr );
 
   private slots:

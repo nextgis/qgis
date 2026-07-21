@@ -19,6 +19,7 @@
 #include "qgssettings.h"
 #include "qgsapplication.h"
 #include "qgis.h"
+#include "qgscoordinatereferencesystem.h"
 #include "qgsprojectlistitemdelegate.h"
 #include "qgsproject.h"
 
@@ -51,6 +52,7 @@ QgsTemplateProjectsModel::QgsTemplateProjectsModel( QObject *parent )
 
   QStandardItem *emptyProjectItem = new QStandardItem();
 
+  emptyProjectItem->setData( static_cast<int>( QgsTemplateProjectsModel::TemplateType::Blank ), static_cast<int>( QgsTemplateProjectsModel::CustomRole::TypeRole ) );
   emptyProjectItem->setData( tr( "New Empty Project" ), QgsProjectListItemDelegate::TitleRole );
   connect( QgsProject::instance(), &QgsProject::crsChanged, this, [emptyProjectItem]() { emptyProjectItem->setData( QgsProject::instance()->crs().userFriendlyIdentifier(), QgsProjectListItemDelegate::CrsRole ); } );
   emptyProjectItem->setData( QgsProject::instance()->crs().userFriendlyIdentifier(), QgsProjectListItemDelegate::CrsRole );
@@ -74,6 +76,26 @@ QgsTemplateProjectsModel::QgsTemplateProjectsModel( QObject *parent )
   emptyProjectItem->setData( previewImage.pixmap(), Qt::DecorationRole );
 
   appendRow( emptyProjectItem );
+
+  QStandardItem *openStreetMapItem = new QStandardItem();
+  openStreetMapItem->setData( static_cast<int>( QgsTemplateProjectsModel::TemplateType::OpenStreetMap ), static_cast<int>( QgsTemplateProjectsModel::CustomRole::TypeRole ) );
+  openStreetMapItem->setData( tr( "OpenStreetMap Basemap" ), QgsProjectListItemDelegate::TitleRole );
+  openStreetMapItem->setData( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:3857" ) ).userFriendlyIdentifier(), QgsProjectListItemDelegate::CrsRole );
+  QImage basemapPreviewImage( QStringLiteral( ":/images/project_templates/basemap.jpg" ) );
+  if ( !basemapPreviewImage.isNull() )
+  {
+    const QSize previewSize( static_cast<int>( 250 * devicePixelRatio ), static_cast<int>( 177 * devicePixelRatio ) );
+    basemapPreviewImage = basemapPreviewImage.scaled( previewSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation );
+    basemapPreviewImage = basemapPreviewImage.copy( QRect( ( basemapPreviewImage.width() - previewSize.width() ) / 2,
+                                                           ( basemapPreviewImage.height() - previewSize.height() ) / 2,
+                                                           previewSize.width(),
+                                                           previewSize.height() ) );
+    const QgsProjectPreviewImage openStreetMapPreviewImage( basemapPreviewImage );
+    openStreetMapItem->setData( openStreetMapPreviewImage.pixmap(), Qt::DecorationRole );
+  }
+  openStreetMapItem->setFlags( Qt::ItemFlag::ItemIsSelectable | Qt::ItemFlag::ItemIsEnabled );
+
+  appendRow( openStreetMapItem );
 }
 
 void QgsTemplateProjectsModel::addTemplateDirectory( const QString &path )
@@ -103,6 +125,7 @@ void QgsTemplateProjectsModel::scanDirectory( const QString &path )
   for ( const QFileInfo &file : files )
   {
     auto item = std::make_unique<QStandardItem>( file.fileName() );
+    item->setData( static_cast<int>( QgsTemplateProjectsModel::TemplateType::File ), static_cast<int>( QgsTemplateProjectsModel::CustomRole::TypeRole ) );
 
     const QString fileId = QCryptographicHash::hash( file.filePath().toUtf8(), QCryptographicHash::Sha224 ).toHex();
 

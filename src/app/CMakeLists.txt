@@ -76,6 +76,8 @@ set(QGIS_APP_SRCS
   qgsstatusbarcoordinateswidget.cpp
   qgsstatusbarmagnifierwidget.cpp
   qgsstatusbarscalewidget.cpp
+  ngsplashscreen.cpp
+  ngsplashscreenrenderer.cpp
   qgstemplateprojectsmodel.cpp
   qgstemporalcontrollerdockwidget.cpp
   qgsversioninfo.cpp
@@ -610,6 +612,7 @@ target_link_libraries(qgis_app
   ${QWT_LIBRARY}
   ${QWTPOLAR_LIBRARY}
   ${QT_VERSION_BASE}::Sql
+  ${QT_VERSION_BASE}::Svg
   ${QT_VERSION_BASE}::UiTools
   ${OPTIONAL_QTWEBKIT}
   #should only be needed for win

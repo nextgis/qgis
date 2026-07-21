@@ -23,10 +23,8 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QFontDatabase>
-#include <QFontMetricsF>
 #include <QPixmap>
 #include <QLocale>
-#include <QRegularExpression>
 #include <QSplashScreen>
 #include <QString>
 #include <QStringList>
@@ -38,8 +36,6 @@
 #include <QStandardPaths>
 #include <QScreen>
 #include <QSurfaceFormat>
-#include <QPainter>
-#include <QSvgRenderer>
 
 #include <cstdio>
 #include <cstdlib>
@@ -108,6 +104,7 @@ typedef SInt32 SRefCon;
 #include "qgsfirstrundialog.h"
 #include "qgsproxystyle.h"
 #include "qgsmessagebar.h"
+#include "ngsplashscreen.h"
 
 #include "qgsuserprofilemanager.h"
 #include "qgsuserprofile.h"
@@ -197,14 +194,6 @@ void usage( const QString &appName )
 namespace
 {
 
-QString splashFilePath( const QString &basePath, const QString &fileName )
-{
-  if ( basePath.endsWith( QLatin1Char( '/' ) ) )
-    return basePath + fileName;
-
-  return basePath + QLatin1Char( '/' ) + fileName;
-}
-
 QString defaultProfilesBasePath()
 {
   const QString basePath = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
@@ -214,94 +203,6 @@ QString defaultProfilesBasePath()
   const QFileInfo basePathInfo( basePath );
   const QDir parentDirectory = basePathInfo.dir();
   return parentDirectory.filePath( QStringLiteral( "NGQ%1" ).arg( Qgis::version().section( '.', 0, 0 ) ) );
-}
-
-QString formatSvgNumber( const qreal value )
-{
-  QString number = QString::number( value, 'f', 2 );
-
-  while ( number.contains( QLatin1Char( '.' ) ) && number.endsWith( QLatin1Char( '0' ) ) )
-    number.chop( 1 );
-
-  if ( number.endsWith( QLatin1Char( '.' ) ) )
-    number.chop( 1 );
-
-  return number;
-}
-
-void replaceSvgElementAttribute( QString &svgContent, const QString &elementName, const QString &elementId, const QString &attributeName, const QString &attributeValue )
-{
-  const QRegularExpression attributeExpression(
-    QStringLiteral( R"((<%1\b(?=[^>]*\bid="%2")[^>]*\b%3=")([^"]*)("))" )
-    .arg( QRegularExpression::escape( elementName ),
-          QRegularExpression::escape( elementId ),
-          QRegularExpression::escape( attributeName ) ) );
-  svgContent.replace( attributeExpression, QStringLiteral( "\\1%1\\3" ).arg( attributeValue ) );
-}
-
-void updateStabilityBadge( QString &svgContent, const QString &stabilityText )
-{
-  constexpr qreal badgeX = 74.0;
-  constexpr qreal badgeY = 203.0;
-  constexpr qreal badgeHeight = 38.0;
-  constexpr qreal textX = 126.0;
-  constexpr qreal rightPadding = 20.0;
-
-  QFont badgeFont( QStringLiteral( "Inter" ) );
-  badgeFont.setPixelSize( 17 );
-  badgeFont.setWeight( QFont::Normal );
-
-  const QFontMetricsF badgeFontMetrics( badgeFont );
-  const qreal textWidth = badgeFontMetrics.horizontalAdvance( stabilityText );
-  const qreal textBaselineY = badgeY + ( badgeHeight - badgeFontMetrics.height() ) / 2.0 + badgeFontMetrics.ascent();
-  const qreal badgeWidth = textX - badgeX + textWidth + rightPadding;
-
-  const QString svgTextX = formatSvgNumber( textX );
-  const QString svgTextBaselineY = formatSvgNumber( textBaselineY );
-
-  replaceSvgElementAttribute( svgContent, QStringLiteral( "rect" ), QStringLiteral( "rect24" ), QStringLiteral( "width" ), formatSvgNumber( badgeWidth ) );
-  replaceSvgElementAttribute( svgContent, QStringLiteral( "text" ), QStringLiteral( "text24" ), QStringLiteral( "x" ), svgTextX );
-  replaceSvgElementAttribute( svgContent, QStringLiteral( "text" ), QStringLiteral( "text24" ), QStringLiteral( "y" ), svgTextBaselineY );
-  replaceSvgElementAttribute( svgContent, QStringLiteral( "tspan" ), QStringLiteral( "tspan24" ), QStringLiteral( "x" ), svgTextX );
-  replaceSvgElementAttribute( svgContent, QStringLiteral( "tspan" ), QStringLiteral( "tspan24" ), QStringLiteral( "y" ), svgTextBaselineY );
-}
-
-QPixmap createSplashPixmap( const QString &splashPath, const qreal devicePixelRatio )
-{
-  QFile svgFile( splashFilePath( splashPath, QStringLiteral( "stable_splash.svg" ) ) );
-  if ( svgFile.open( QIODevice::ReadOnly ) )
-  {
-    QString svgContent = QString::fromUtf8( svgFile.readAll() );
-    const QString stabilityText = QObject::tr( "Stable version" );
-    svgContent.replace( QStringLiteral( "{{stability}}" ), stabilityText.toHtmlEscaped() );
-    updateStabilityBadge( svgContent, stabilityText );
-
-    const QString versionInfo = QObject::tr( "v%1 | based on QGIS %2" )
-                                .arg( QString::fromUtf8( NEXTGIS_QGIS_VERSION ), Qgis::version().section( '-', 0, 0 ) );
-    svgContent.replace( QStringLiteral( "{{version_info}}" ), versionInfo.toHtmlEscaped() );
-
-    QSvgRenderer svgRenderer( svgContent.toUtf8() );
-    if ( svgRenderer.isValid() )
-    {
-      QSize splashSize = svgRenderer.defaultSize();
-      if ( splashSize.isEmpty() )
-        splashSize = QSize( 750, 350 );
-
-      const QSize renderSize( std::ceil( splashSize.width() * devicePixelRatio ), std::ceil( splashSize.height() * devicePixelRatio ) );
-      QPixmap pixmap( renderSize );
-      pixmap.fill( Qt::transparent );
-      pixmap.setDevicePixelRatio( devicePixelRatio );
-
-      QPainter painter( &pixmap );
-      painter.setRenderHint( QPainter::Antialiasing, true );
-      painter.setRenderHint( QPainter::TextAntialiasing, true );
-      painter.setRenderHint( QPainter::SmoothPixmapTransform, true );
-      svgRenderer.render( &painter, QRectF( QPointF( 0, 0 ), QSizeF( splashSize ) ) );
-      return pixmap;
-    }
-  }
-
-  return QPixmap( splashFilePath( splashPath, QStringLiteral( "splash.png" ) ) );
 }
 
 }
@@ -1627,9 +1528,7 @@ int main( int argc, char *argv[] )
   {
     splashDevicePixelRatio = screen->devicePixelRatio();
   }
-  QPixmap pixmap( createSplashPixmap( splashPath, splashDevicePixelRatio ) );
-
-  QSplashScreen *mypSplash = new QSplashScreen( pixmap );
+  QSplashScreen *mypSplash = new NgSplashScreen( splashPath, splashDevicePixelRatio );
 
   // Force splash screen to start on primary screen
   if ( QScreen *screen = QGuiApplication::primaryScreen() )
@@ -1641,7 +1540,7 @@ int main( int argc, char *argv[] )
   if ( !takeScreenShots && !myHideSplash && !settings.value( QStringLiteral( "qgis/hideSplash" ) ).toBool() )
   {
     //for win and linux we can just automask and png transparency areas will be used
-    mypSplash->setMask( pixmap.mask() );
+    mypSplash->setMask( mypSplash->pixmap().mask() );
     mypSplash->show();
   }
 

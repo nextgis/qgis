@@ -76,7 +76,9 @@
         <file>north_arrows/default.svg</file>
         <file>north_arrows/gpsarrow.svg</file>
         <file>north_arrows/gpsarrow2.svg</file>
+        <file>project_templates/basemap.jpg</file>
         <file>splash/loading.svg</file>
+        <file>splash/loading_nightly.svg</file>
         <file>splash/stable_splash.svg</file>
         <file>splash/stable_nightly_splash.svg</file>
         <file>composer/missing_image.png</file>

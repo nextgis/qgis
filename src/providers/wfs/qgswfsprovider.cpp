@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgis.h"
+#include "qgsapplication.h"
 #include "qgscplhttpfetchoverrider.h"
 #include "qgssetrequestinitiator_p.h"
 #include "qgsfeature.h"
@@ -59,7 +60,6 @@
 #include <QTimer>
 #include <QUrlQuery>
 #include <QRegularExpression>
-#include <QStandardPaths>
 
 #include <cfloat>
 
@@ -1684,7 +1684,9 @@ bool QgsWFSProvider::readAttributesFromSchemaWithGMLAS( const QByteArray &respon
     QgsSettings settings;
     QString cacheDirectory = settings.value( QStringLiteral( "cache/directory" ) ).toString();
     if ( cacheDirectory.isEmpty() )
-      cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+    {
+      cacheDirectory = QgsApplication::qgisCacheDirPath();
+    }
     if ( !cacheDirectory.endsWith( QDir::separator() ) )
     {
       cacheDirectory.push_back( QDir::separator() );

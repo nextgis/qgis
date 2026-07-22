@@ -265,6 +265,11 @@ Returns the path to the master qgis.db file.
 Returns the path to the settings directory in user's home dir
 %End
 
+    static QString qgisCacheDirPath();
+%Docstring
+Returns the default cache directory path for this QGIS version.
+%End
+
     static QString qgisUserDatabaseFilePath();
 %Docstring
 Returns the path to the user qgis.db file.

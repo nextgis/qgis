@@ -42,7 +42,6 @@
 #include <QRecursiveMutex>
 #include <QThreadStorage>
 #include <QAuthenticator>
-#include <QStandardPaths>
 #include <QUuid>
 
 const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout = new QgsSettingsEntryInteger( QStringLiteral( "network-timeout" ), QgsSettingsTree::sTreeNetwork, 300000, QObject::tr( "Network timeout" ) );
@@ -830,7 +829,9 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache( Qt::ConnectionType conn
 
   QString cacheDirectory = QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value();
   if ( cacheDirectory.isEmpty() )
-    cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+  {
+    cacheDirectory = QgsApplication::qgisCacheDirPath();
+  }
   newcache->setCacheDirectory( cacheDirectory );
   qint64 cacheSize = QgsSettingsRegistryCore::settingsNetworkCacheSize->value();
   newcache->setMaximumCacheSize( cacheSize );

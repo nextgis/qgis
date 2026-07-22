@@ -18,6 +18,7 @@
 #include "qgstiledownloadmanager.h"
 #include "moc_qgstiledownloadmanager.cpp"
 
+#include "qgsapplication.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsrangerequestcache.h"
@@ -27,7 +28,6 @@
 
 #include <QElapsedTimer>
 #include <QNetworkReply>
-#include <QStandardPaths>
 #include <QRegularExpression>
 
 /// @cond PRIVATE
@@ -197,7 +197,9 @@ QgsTileDownloadManager::QgsTileDownloadManager()
   const QgsSettings settings;
   QString cacheDirectory = QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value();
   if ( cacheDirectory.isEmpty() )
-    cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+  {
+    cacheDirectory = QgsApplication::qgisCacheDirPath();
+  }
   if ( !cacheDirectory.endsWith( QDir::separator() ) )
   {
     cacheDirectory.push_back( QDir::separator() );

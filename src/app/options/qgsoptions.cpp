@@ -79,7 +79,6 @@
 #include <QStyleFactory>
 #include <QMessageBox>
 #include <QNetworkDiskCache>
-#include <QStandardPaths>
 #include <QRegularExpression>
 
 #include <limits>
@@ -492,7 +491,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
 
   // cache settings
   mCacheDirectory->setText( QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value() );
-  mCacheDirectory->setPlaceholderText( QStandardPaths::writableLocation( QStandardPaths::CacheLocation ) );
+  mCacheDirectory->setPlaceholderText( QgsApplication::qgisCacheDirPath() );
   mCacheSize->setMinimum( 0 );
   mCacheSize->setMaximum( std::numeric_limits<int>::max() );
   mCacheSize->setSingleStep( 50 );
@@ -2281,7 +2280,9 @@ void QgsOptions::clearCache()
   // Clear WFS XSD cache used by OGR GMLAS driver
   QString cacheDirectory = QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value();
   if ( cacheDirectory.isEmpty() )
-    cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+  {
+    cacheDirectory = QgsApplication::qgisCacheDirPath();
+  }
   if ( !cacheDirectory.endsWith( QDir::separator() ) )
   {
     cacheDirectory.push_back( QDir::separator() );

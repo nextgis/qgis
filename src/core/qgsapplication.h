@@ -335,6 +335,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     //! Returns the path to the settings directory in user's home dir
     static QString qgisSettingsDirPath();
 
+    //! Returns the default cache directory path for this QGIS version.
+    static QString qgisCacheDirPath();
+
     //! Returns the path to the user qgis.db file.
     static QString qgisUserDatabaseFilePath();
 

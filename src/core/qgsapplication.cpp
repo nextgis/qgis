@@ -1291,6 +1291,17 @@ QString QgsApplication::qgisSettingsDirPath()
   return *sConfigPath();
 }
 
+QString QgsApplication::qgisCacheDirPath()
+{
+  const QString cachePath = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+  if ( cachePath.isEmpty() )
+    return cachePath;
+
+  const QFileInfo cachePathInfo( cachePath );
+  const QDir parentDirectory = cachePathInfo.dir();
+  return parentDirectory.filePath( QStringLiteral( "NGQ%1" ).arg( Qgis::version().section( '.', 0, 0 ) ) );
+}
+
 QString QgsApplication::qgisUserDatabaseFilePath()
 {
   return qgisSettingsDirPath() + QStringLiteral( "qgis.db" );

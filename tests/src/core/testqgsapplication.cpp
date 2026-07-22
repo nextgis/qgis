@@ -13,7 +13,10 @@ Email                : sherman at mrcc dot com
  *                                                                         *
  ***************************************************************************/
 #include "qgstest.h"
+#include <QDir>
+#include <QFileInfo>
 #include <QPixmap>
+#include <QStandardPaths>
 
 #define CPL_SUPRESS_CPLUSPLUS //#spellok
 #include <gdal.h>
@@ -40,6 +43,7 @@ class TestQgsApplication : public QgsTest
     void osName();
     void platformName();
     void applicationFullName();
+    void qgisCacheDirPath();
     void themeIcon();
 
   private:
@@ -100,6 +104,21 @@ void TestQgsApplication::applicationFullName()
 {
   // test will always be run under external platform
   QCOMPARE( QgsApplication::applicationFullName(), QString( "QGIS-TEST external" ) );
+}
+
+void TestQgsApplication::qgisCacheDirPath()
+{
+  const QString standardCachePath = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
+  const QString cachePath = QgsApplication::qgisCacheDirPath();
+
+  QCOMPARE( QFileInfo( cachePath ).fileName(), QStringLiteral( "NGQ%1" ).arg( Qgis::version().section( '.', 0, 0 ) ) );
+  QCOMPARE( QFileInfo( cachePath ).dir().absolutePath(), QFileInfo( standardCachePath ).dir().absolutePath() );
+
+  QDir dir;
+  QVERIFY( dir.mkpath( cachePath ) );
+  const QFileInfo cachePathInfo( cachePath );
+  QVERIFY( cachePathInfo.isDir() );
+  QVERIFY( cachePathInfo.isWritable() );
 }
 
 void TestQgsApplication::themeIcon()

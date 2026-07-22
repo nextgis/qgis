@@ -20,7 +20,7 @@
  ****************************************************************************/
 #include "ngsaboutdialog.h"
 #include "ui_ngsaboutdialog.h"
-#include "ngversion.h"
+#include "qgis.h"
 #include "qgsconfig.h"
 #include "qgsngutils.h"
 
@@ -118,7 +118,7 @@ NgsAboutDialog::NgsAboutDialog( QWidget *parent )
 
   QString details = "<html><body>";
   details += "<div style='margin:10;padding:0;line-height:150%;font-size:14px'><br>";
-  details += NEXTGIS " " + tr( "QGIS version" ) + ": " + NgVersion::nextgisQgisVersion() + "<br>";
+  details += NEXTGIS " " + tr( "QGIS version" ) + ": " + Qgis::ngqFullVersion() + "<br>";
   details += tr( "QGIS code base" ) + ": " + QLatin1String( VERSION ) + "</div>";
 
   details += "<hr>";

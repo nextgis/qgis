@@ -381,6 +381,48 @@ QString Qgis::devVersion()
   return QString::fromUtf8( QGIS_DEV_VERSION );
 }
 
+QString Qgis::ngqVersion()
+{
+  return QString::fromUtf8( NGQ_VERSION );
+}
+
+int Qgis::ngqVersionInt()
+{
+  return NGQ_VERSION_INT;
+}
+
+bool Qgis::ngqIsNightlyBuild()
+{
+  return NGQ_IS_NIGHTLY_BUILD != 0;
+}
+
+Qgis::NgqChannel Qgis::ngqChannel()
+{
+  switch ( NGQ_CHANNEL_ID )
+  {
+    case 1:
+      return Qgis::NgqChannel::Edge;
+    case 2:
+      return Qgis::NgqChannel::Custom;
+    case 0:
+    default:
+      return Qgis::NgqChannel::Stable;
+  }
+}
+
+QString Qgis::ngqChannelName()
+{
+  return QString::fromUtf8( NGQ_CHANNEL_NAME );
+}
+
+QString Qgis::ngqFullVersion()
+{
+  QString version = ngqVersion();
+  if ( ngqIsNightlyBuild() )
+    version += QStringLiteral( "-nightly.%1+%2" ).arg( QString::fromUtf8( NGQ_BUILD_NUMBER ), devVersion() );
+  return version;
+}
+
 QString Qgis::geosVersion()
 {
   return GEOSversion();
@@ -421,4 +463,3 @@ bool qMapLessThanKey<QVariantList>( const QVariantList &key1, const QVariantList
   return qgsVariantGreaterThan( key1, key2 ) && key1 != key2;
 }
 #endif
-

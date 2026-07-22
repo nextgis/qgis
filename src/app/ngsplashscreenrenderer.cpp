@@ -15,7 +15,6 @@
 
 #include "ngsplashscreenrenderer.h"
 
-#include "ngversion.h"
 #include "qgis.h"
 
 #include <QColor>
@@ -31,15 +30,15 @@
 
 NgSplashScreenRenderer::NgSplashScreenRenderer( const QString &splashPath )
 {
-  const bool stableVersion = NgVersion::stableVersionRequested();
-  const QString loadingFileName = stableVersion ? QStringLiteral( "loading.svg" ) : QStringLiteral( "loading_nightly.svg" );
+  const bool nightlyBuild = Qgis::ngqIsNightlyBuild();
+  const QString loadingFileName = nightlyBuild ? QStringLiteral( "loading_nightly.svg" ) : QStringLiteral( "loading.svg" );
 
   mLoadingRenderer.load( splashFilePath( splashPath, loadingFileName ) );
 
   if ( !mLoadingRenderer.isValid() )
     mLoadingRenderer.load( QStringLiteral( ":/images/splash/%1" ).arg( loadingFileName ) );
 
-  if ( !mLoadingRenderer.isValid() && !stableVersion )
+  if ( !mLoadingRenderer.isValid() && nightlyBuild )
     mLoadingRenderer.load( QStringLiteral( ":/images/splash/loading.svg" ) );
 
   mLoadingAnimationTime.start();
@@ -47,12 +46,12 @@ NgSplashScreenRenderer::NgSplashScreenRenderer( const QString &splashPath )
 
 QPixmap NgSplashScreenRenderer::createSplashPixmap( const QString &splashPath, const qreal devicePixelRatio )
 {
-  const bool stableVersion = NgVersion::stableVersionRequested();
-  const QString splashFileName = stableVersion ? QStringLiteral( "stable_splash.svg" ) : QStringLiteral( "stable_nightly_splash.svg" );
+  const bool nightlyBuild = Qgis::ngqIsNightlyBuild();
+  const QString splashFileName = nightlyBuild ? QStringLiteral( "stable_nightly_splash.svg" ) : QStringLiteral( "stable_splash.svg" );
 
   QFile svgFile( splashFilePath( splashPath, splashFileName ) );
   bool svgOpened = svgFile.open( QIODevice::ReadOnly );
-  if ( !svgOpened && !stableVersion )
+  if ( !svgOpened && nightlyBuild )
   {
     svgFile.setFileName( splashFilePath( splashPath, QStringLiteral( "stable_splash.svg" ) ) );
     svgOpened = svgFile.open( QIODevice::ReadOnly );
@@ -66,7 +65,7 @@ QPixmap NgSplashScreenRenderer::createSplashPixmap( const QString &splashPath, c
     updateStabilityBadge( svgContent, stabilityText );
 
     const QString versionInfo = QObject::tr( "v%1 • based on QGIS %2" )
-                                .arg( NgVersion::nextgisQgisVersion(), Qgis::version().section( '-', 0, 0 ) );
+                                .arg( Qgis::ngqFullVersion(), Qgis::version().section( '-', 0, 0 ) );
     svgContent.replace( QStringLiteral( "{{version_info}}" ), versionInfo.toHtmlEscaped() );
 
     QSvgRenderer svgRenderer( svgContent.toUtf8() );
@@ -95,7 +94,7 @@ QPixmap NgSplashScreenRenderer::createSplashPixmap( const QString &splashPath, c
 
 QColor NgSplashScreenRenderer::statusTextColor()
 {
-  return NgVersion::stableVersionRequested() ? QColor( QStringLiteral( "#3f3f3f" ) ) : QColor( 255, 255, 255, 204 );
+  return Qgis::ngqIsNightlyBuild() ? QColor( 255, 255, 255, 204 ) : QColor( QStringLiteral( "#3f3f3f" ) );
 }
 
 void NgSplashScreenRenderer::renderDynamicContent( QPainter *painter, const QRect &rect, const QString &statusText )

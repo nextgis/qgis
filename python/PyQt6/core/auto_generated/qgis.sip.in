@@ -66,6 +66,43 @@ The development version
 .. versionadded:: 3.12
 %End
 
+    enum class NgqChannel
+    {
+      Stable,
+      Edge,
+      Custom,
+    };
+
+    static QString ngqVersion();
+%Docstring
+NextGIS QGIS version string.
+%End
+
+    static int ngqVersionInt();
+%Docstring
+NextGIS QGIS version number.
+%End
+
+    static bool ngqIsNightlyBuild();
+%Docstring
+Returns ``True`` if this is a nightly NextGIS QGIS build.
+%End
+
+    static Qgis::NgqChannel ngqChannel();
+%Docstring
+Returns NextGIS QGIS release channel.
+%End
+
+    static QString ngqChannelName();
+%Docstring
+Returns NextGIS QGIS release channel name passed at build time.
+%End
+
+    static QString ngqFullVersion();
+%Docstring
+Full NextGIS QGIS version string, including nightly build suffix when applicable.
+%End
+
 
     enum class AuthConfigurationStorageCapability /BaseType=IntFlag/
     {

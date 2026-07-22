@@ -88,6 +88,47 @@ class CORE_EXPORT Qgis
      */
     static QString devVersion();
 
+    /**
+     * NextGIS QGIS release channel.
+     */
+    enum class NgqChannel : int
+    {
+      Stable = 0, //!< Stable release channel
+      Edge = 1, //!< Edge release channel
+      Custom = 2, //!< Custom release channel
+    };
+    Q_ENUM( NgqChannel )
+
+    /**
+     * NextGIS QGIS version string.
+     */
+    static QString ngqVersion();
+
+    /**
+     * NextGIS QGIS version number.
+     */
+    static int ngqVersionInt();
+
+    /**
+     * Returns TRUE if this is a nightly NextGIS QGIS build.
+     */
+    static bool ngqIsNightlyBuild();
+
+    /**
+     * Returns NextGIS QGIS release channel.
+     */
+    static NgqChannel ngqChannel();
+
+    /**
+     * Returns NextGIS QGIS release channel name passed at build time.
+     */
+    static QString ngqChannelName();
+
+    /**
+     * Full NextGIS QGIS version string, including nightly build suffix when applicable.
+     */
+    static QString ngqFullVersion();
+
     // Enumerations
     //
 

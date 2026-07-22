@@ -210,7 +210,6 @@
 #include "moc_qgisapp.cpp"
 #include "qgisappinterface.h"
 #include "ngsplashscreenrenderer.h"
-#include "ngversion.h"
 #include "qgisappstylesheet.h"
 #include "qgis.h"
 #include "qgsabout.h"
@@ -5491,7 +5490,7 @@ QString QgisApp::getVersionString()
   const QString compLabel = tr( "Compiled" );
   const QString runLabel = tr( "Running" );
 
-  versionString += QStringLiteral( "<tr><td>%1</td><td>%2</td>" ).arg( tr( "NextGIS QGIS version" ), NgVersion::nextgisQgisVersion() );
+  versionString += QStringLiteral( "<tr><td>%1</td><td>%2</td>" ).arg( tr( "NextGIS QGIS version" ), Qgis::ngqFullVersion() );
   versionString += QLatin1String( "</tr><tr>" );
   versionString += QStringLiteral( "<td>%1</td><td>%2</td>" ).arg( tr( "QGIS version" ), Qgis::version() );
   versionString += QLatin1String( "</tr><tr>" );

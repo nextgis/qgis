@@ -261,6 +261,12 @@ QgsDataProvider.SUBLAYER_SEPARATOR = QgsDataProvider.sublayerSeparator()
 Qgis.QGIS_VERSION = Qgis.version()
 Qgis.QGIS_VERSION_INT = Qgis.versionInt()
 Qgis.QGIS_RELEASE_NAME = Qgis.releaseName()
+Qgis.NGQ_VERSION = Qgis.ngqVersion()
+Qgis.NGQ_VERSION_INT = Qgis.ngqVersionInt()
+Qgis.NGQ_IS_NIGHTLY_BUILD = Qgis.ngqIsNightlyBuild()
+Qgis.NGQ_CHANNEL = Qgis.ngqChannel()
+Qgis.NGQ_CHANNEL_NAME = Qgis.ngqChannelName()
+Qgis.NGQ_FULL_VERSION = Qgis.ngqFullVersion()
 
 # Monkey patch QgsMapLayerType
 

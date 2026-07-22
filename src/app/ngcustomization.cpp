@@ -20,7 +20,7 @@
 #include "ngcustomization.h"
 
 #include "ngsaboutdialog.h"
-#include "ngversion.h"
+#include "qgis.h"
 #include "qgsmessagelogviewer.h"
 #include "qgsmessagebar.h"
 #include "qgsmessagebaritem.h"
@@ -204,7 +204,7 @@ void NGQgisApp::createToolBars()
   }
   NGSignInButton *toolbAuth = new NGSignInButton( QLatin1String( "tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN" ), scopes, endPointStr, type );
 
-  QString version = NgVersion::nextgisQgisVersion() + " (" + QLatin1String( VERSION ) + ")";
+  QString version = Qgis::ngqFullVersion() + " (" + QLatin1String( VERSION ) + ")";
 #else
   NGSignInButton *toolbAuth = new NGSignInButton( QLatin1String( "tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN" ), QLatin1String( "user_info.read" ) );
 #endif // NGLIB_VERSION_NUMBER > 1100

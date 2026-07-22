@@ -949,15 +949,14 @@ class Plugins(QObject):
     def getAllInstalled(self):
         """Build the localCache"""
         self.localCache = {}
+        self.obsoletePlugins = []
 
-        # reversed list of the plugin paths: first system plugins -> then user plugins -> finally custom path(s)
+        # Keep the same priority as Python imports: user/profile plugins mask
+        # bundled plugins with the same package id.
         pluginPaths = list(plugin_paths)
-        pluginPaths.reverse()
 
         for pluginsPath in pluginPaths:
-            isTheSystemDir = (
-                pluginPaths.index(pluginsPath) == 0
-            )  # The current dir is the system plugins dir
+            isTheSystemDir = pluginsPath == qgis.utils.sys_plugin_path
             if isTheSystemDir:
                 # temporarily add the system path as the first element to force loading the readonly plugins, even if masked by user ones.
                 sys.path = [pluginsPath] + sys.path
@@ -966,6 +965,8 @@ class Plugins(QObject):
                 pluginDir.setFilter(QDir.Filter.AllDirs)
                 for key in pluginDir.entryList():
                     if key not in [".", ".."]:
+                        if key in self.localCache:
+                            continue
                         path = QDir.toNativeSeparators(pluginsPath + "/" + key)
                         # readOnly = not QFileInfo(pluginsPath).isWritable() # On windows testing the writable status isn't reliable.
                         readOnly = isTheSystemDir  # Assume only the system plugins are not writable.
@@ -973,16 +974,6 @@ class Plugins(QObject):
                         plugin = self.getInstalledPlugin(
                             key, path=path, readOnly=readOnly
                         )
-                        if (
-                            key in list(self.localCache.keys())
-                            and compareVersions(
-                                self.localCache[key]["version_installed"],
-                                plugin["version_installed"],
-                            )
-                            == 1
-                        ):
-                            # An obsolete plugin in the "user" location is masking a newer one in the "system" location!
-                            self.obsoletePlugins += [key]
                         self.localCache[key] = plugin
             except:
                 # it's not necessary to stop if one of the dirs is inaccessible

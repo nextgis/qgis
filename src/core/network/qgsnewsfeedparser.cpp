@@ -306,8 +306,8 @@ void QgsNewsFeedParser::fetchImageForEntry( const QgsNewsFeedParser::Entry &entr
       }
 
       QSize size = img.size();
-      constexpr int maxPreviewWidth = 250;
-      constexpr int maxPreviewHeight = 144;
+      constexpr int maxPreviewWidth = 200;
+      constexpr int maxPreviewHeight = 112;
       if ( size.width() > maxPreviewWidth )
       {
         size.setHeight( static_cast< int >( size.height() * static_cast< double >( maxPreviewWidth ) / size.width() ) );

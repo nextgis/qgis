@@ -16057,7 +16057,7 @@ void QgisApp::createPreviewImage( const QString &path, const QIcon &icon )
 {
   // Render the map canvas
   const double devicePixelRatio = mMapCanvas->mapSettings().devicePixelRatio();
-  QSize previewSize( 250, 177 ); // h = w / std::sqrt(2)
+  QSize previewSize( 200, 112 );
   QRect previewRect( QPoint( ( mMapCanvas->width() - previewSize.width() ) / 2, ( mMapCanvas->height() - previewSize.height() ) / 2 ), previewSize );
 
   QPixmap previewImage( previewSize * devicePixelRatio );
@@ -16069,7 +16069,7 @@ void QgisApp::createPreviewImage( const QString &path, const QIcon &icon )
   if ( !icon.isNull() )
   {
     QPixmap pixmap = icon.pixmap( QSize( 24, 24 ) );
-    previewPainter.drawPixmap( QPointF( 250 - 24 - 5, 177 - 24 - 5 ), pixmap );
+    previewPainter.drawPixmap( QPointF( previewSize.width() - 24 - 5, previewSize.height() - 24 - 5 ), pixmap );
   }
   previewPainter.end();
 

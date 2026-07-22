@@ -31,6 +31,11 @@
 
 #include <memory>
 
+namespace
+{
+  constexpr int PROJECT_PREVIEW_WIDTH = 200;
+  constexpr int PROJECT_PREVIEW_HEIGHT = 112;
+}
 
 QgsTemplateProjectsModel::QgsTemplateProjectsModel( QObject *parent )
   : QStandardItemModel( parent )
@@ -58,7 +63,7 @@ QgsTemplateProjectsModel::QgsTemplateProjectsModel( QObject *parent )
   emptyProjectItem->setData( QgsProject::instance()->crs().userFriendlyIdentifier(), QgsProjectListItemDelegate::CrsRole );
   emptyProjectItem->setFlags( Qt::ItemFlag::ItemIsSelectable | Qt::ItemFlag::ItemIsEnabled );
   const double devicePixelRatio = qobject_cast<QGuiApplication *>( QCoreApplication::instance() )->devicePixelRatio();
-  QImage image( QSize( 250 * devicePixelRatio, 177 * devicePixelRatio ), QImage::Format_ARGB32 );
+  QImage image( QSize( PROJECT_PREVIEW_WIDTH * devicePixelRatio, PROJECT_PREVIEW_HEIGHT * devicePixelRatio ), QImage::Format_ARGB32 );
   const QgsSettings settings;
   const int myRed = settings.value( QStringLiteral( "qgis/default_canvas_color_red" ), 255 ).toInt();
   const int myGreen = settings.value( QStringLiteral( "qgis/default_canvas_color_green" ), 255 ).toInt();
@@ -84,7 +89,7 @@ QgsTemplateProjectsModel::QgsTemplateProjectsModel( QObject *parent )
   QImage basemapPreviewImage( QStringLiteral( ":/images/project_templates/basemap.jpg" ) );
   if ( !basemapPreviewImage.isNull() )
   {
-    const QSize previewSize( static_cast<int>( 250 * devicePixelRatio ), static_cast<int>( 177 * devicePixelRatio ) );
+    const QSize previewSize( static_cast<int>( PROJECT_PREVIEW_WIDTH * devicePixelRatio ), static_cast<int>( PROJECT_PREVIEW_HEIGHT * devicePixelRatio ) );
     basemapPreviewImage = basemapPreviewImage.scaled( previewSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation );
     basemapPreviewImage = basemapPreviewImage.copy( QRect( ( basemapPreviewImage.width() - previewSize.width() ) / 2,
                                                            ( basemapPreviewImage.height() - previewSize.height() ) / 2,

@@ -26,6 +26,12 @@
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
 
+namespace
+{
+  constexpr int PROJECT_PREVIEW_WIDTH = 200;
+  constexpr int PROJECT_PREVIEW_HEIGHT = 112;
+}
+
 QgsProjectListItemDelegate::QgsProjectListItemDelegate( QObject *parent )
   : QStyledItemDelegate( parent )
   , mRoundedRectSizePixels( static_cast<int>( Qgis::UI_SCALE_FACTOR * QApplication::fontMetrics().height() * 0.5 ) )
@@ -158,8 +164,19 @@ void QgsProjectPreviewImage::setImage( const QImage &image )
 
 QPixmap QgsProjectPreviewImage::pixmap() const
 {
+  const QSize previewSize( PROJECT_PREVIEW_WIDTH, PROJECT_PREVIEW_HEIGHT );
+  QImage image = mImage;
+  if ( image.size() != previewSize )
+  {
+    image = image.scaled( previewSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation );
+    image = image.copy( QRect( ( image.width() - previewSize.width() ) / 2,
+                               ( image.height() - previewSize.height() ) / 2,
+                               previewSize.width(),
+                               previewSize.height() ) );
+  }
+
   //nicely round corners so users don't get paper cuts
-  QImage previewImage( mImage.size(), QImage::Format_ARGB32 );
+  QImage previewImage( previewSize, QImage::Format_ARGB32 );
   previewImage.fill( Qt::transparent );
   QPainter previewPainter( &previewImage );
   previewPainter.setRenderHint( QPainter::Antialiasing, true );
@@ -167,7 +184,7 @@ QPixmap QgsProjectPreviewImage::pixmap() const
   previewPainter.setBrush( Qt::black );
   previewPainter.drawRoundedRect( 0, 0, previewImage.width(), previewImage.height(), 8, 8 );
   previewPainter.setCompositionMode( QPainter::CompositionMode_SourceIn );
-  previewPainter.drawImage( 0, 0, mImage );
+  previewPainter.drawImage( 0, 0, image );
   previewPainter.end();
   return QPixmap::fromImage( previewImage );
 }

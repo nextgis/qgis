@@ -1,11 +1,18 @@
 include(CopyResources)
 
 # OS X app/doc icons
-if (APPLE)
-  add_subdirectory(mac)
+if (APPLE AND WITH_DESKTOP)
+  install (FILES qgis.icns
+           DESTINATION ${CMAKE_INSTALL_PREFIX}/../Resources)
+
+  file (GLOB FILE_FORMAT_ICONS ${CMAKE_CURRENT_SOURCE_DIR}/file_icons/mac/*.icns)
+  install (FILES ${FILE_FORMAT_ICONS}
+           DESTINATION ${CMAKE_INSTALL_PREFIX}/../Resources)
 endif()
 
 file(GLOB_RECURSE ICON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.png)
+file(GLOB FILE_FORMAT_ICON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} file_icons/svg/*.svg)
+list(APPEND ICON_FILES ${FILE_FORMAT_ICON_FILES})
 
 ADD_QGIS_RESOURCES("${CMAKE_CURRENT_SOURCE_DIR}" "images/icons" DEST_ICON_FILES "${ICON_FILES}")
 

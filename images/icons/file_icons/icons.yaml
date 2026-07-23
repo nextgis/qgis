@@ -1,0 +1,130 @@
+version: 1
+default_background: components/document.svg
+compression_icon: components/zip.svg
+
+icons:
+  - name: "Arc/Info ASCII Grid"
+    extension: "ASC"
+    file_extensions: ["asc"]
+    component: "components/raster.svg"
+
+  - name: "DDF mixed dataset"
+    extension: "DDF"
+    file_extensions: ["ddf"]
+    component: "components/mixed.svg"
+
+  - name: "Digital elevation model"
+    extension: "DEM"
+    file_extensions: ["dem"]
+    component: "components/raster.svg"
+
+  - name: "DTED level 0"
+    extension: "DT0"
+    file_extensions: ["dt0"]
+    component: "components/raster.svg"
+
+  - name: "AutoCAD DXF"
+    extension: "DXF"
+    file_extensions: ["dxf"]
+    component: "components/vector.svg"
+
+  - name: "Geography Markup Language"
+    extension: "GML"
+    file_extensions: ["gml"]
+    component: "components/vector.svg"
+
+  - name: "GeoJSON"
+    extension: "GEOJSON"
+    file_extensions: ["geojson"]
+    component: "components/vector.svg"
+
+  - name: "GeoPackage"
+    extension: "GPKG"
+    file_extensions: ["gpkg"]
+    component: "components/gpkg.svg"
+
+  - name: "GPX"
+    extension: "GPX"
+    file_extensions: ["gpx"]
+    component: "components/vector.svg"
+
+  - name: "ERDAS Imagine"
+    extension: "IMG"
+    file_extensions: ["img"]
+    component: "components/raster.svg"
+
+  - name: "JPEG 2000"
+    extension: "JP2"
+    file_extensions: ["jp2", "j2k"]
+    component: "components/raster.svg"
+
+  - name: "KML"
+    extension: "KML"
+    file_extensions: ["kml"]
+    component: "components/vector.svg"
+
+  - name: "MapInfo Interchange Format"
+    extension: "MIF"
+    file_extensions: ["mif"]
+    component: "components/vector.svg"
+
+  - name: "MBTiles"
+    extension: "MBTILES"
+    file_extensions: ["mbtiles"]
+    component: "components/tiles.svg"
+
+  - name: "Machine learning data"
+    extension: "MLDATA"
+    file_extensions: ["mldata"]
+    component: "components/ml.svg"
+
+  - name: "QGIS project"
+    extension: "QGS"
+    file_extensions: ["qgs"]
+    component: "components/project.svg"
+
+  - name: "Compressed QGIS project"
+    extension: "QGZ"
+    file_extensions: ["qgz"]
+    component: "components/project.svg"
+    compressed: true
+
+  - name: "QGIS layer definition"
+    extension: "QLR"
+    file_extensions: ["qlr"]
+    component: "components/layer_definition.svg"
+
+  - name: "QGIS style"
+    extension: "QML"
+    file_extensions: ["qml"]
+    component: "components/style.svg"
+
+  - name: "QGIS print template"
+    extension: "QPT"
+    file_extensions: ["qpt"]
+    component: "components/template.svg"
+
+  - name: "ESRI Shapefile"
+    extension: "SHP"
+    file_extensions: ["shp"]
+    component: "components/vector.svg"
+
+  - name: "SQLite dataset"
+    extension: "SQLITE"
+    file_extensions: ["sqlite"]
+    component: "components/sqlite.svg"
+
+  - name: "MapInfo TAB"
+    extension: "TAB"
+    file_extensions: ["tab"]
+    component: "components/vector.svg"
+
+  - name: "GeoTIFF"
+    extension: "TIF"
+    file_extensions: ["tif", "tiff"]
+    component: "components/raster.svg"
+
+  - name: "Virtual raster"
+    extension: "VRT"
+    file_extensions: ["vrt"]
+    component: "components/raster.svg"

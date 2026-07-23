@@ -14,8 +14,9 @@ foreach(size ${sizes})
 endforeach()
 
 # Install QGIS file formats icons
+set(file_format_icons_dir ${CMAKE_SOURCE_DIR}/images/icons/file_icons/svg)
 foreach(_type qgs qlr qml qpt)
-  install(FILES ${CMAKE_SOURCE_DIR}/images/icons/qgis_${_type}_icon.svg RENAME qgis_${_type}.svg DESTINATION share/icons/hicolor/scalable/mimetypes/)
+  install(FILES ${file_format_icons_dir}/${_type}.svg RENAME qgis_${_type}.svg DESTINATION share/icons/hicolor/scalable/mimetypes/)
   foreach(size ${sizes})
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/icons/qgis-${_type}${size}.png RENAME qgis-${_type}.png DESTINATION share/icons/hicolor/${size}/mimetypes/)
   endforeach()

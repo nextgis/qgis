@@ -423,6 +423,7 @@ ADD_PYTHON_TEST(PyQgsVtpk test_qgsvtpk.py)
 ADD_PYTHON_TEST(PyQgsProcessingAlgsGdalGdalUtils test_processing_algs_gdal_gdalutils.py)
 ADD_PYTHON_TEST(PyQgsInterpolation test_analysis_interpolation.py)
 ADD_PYTHON_TEST(PyQgsNineCellFilter test_analysis_ninecellfilter.py)
+ADD_PYTHON_TEST(PyCogHeaderReuse test_cog_header_reuse.py)
 
 if (NOT WIN32)
   ADD_PYTHON_TEST(PyQgsLogger test_qgslogger.py)
